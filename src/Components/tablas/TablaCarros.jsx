@@ -1,4 +1,5 @@
 import { BASE_URL } from "../../config";
+import TablaDesplegable from "./TablaDesplegable";
 
 function TablaCarros({ carros, seleccionar, refrescar }) {
 
@@ -13,6 +14,8 @@ function TablaCarros({ carros, seleccionar, refrescar }) {
   };
 
   return (
+    <TablaDesplegable total={carros.length}>
+      {(limite) => (
     <table className="table-modern">
       <thead>
         <tr>
@@ -33,7 +36,7 @@ function TablaCarros({ carros, seleccionar, refrescar }) {
       </thead>
 
       <tbody>
-        {carros.map((c) => (
+        {carros.slice(0, limite).map((c) => (
           <tr key={c.Id_Predio}>
 
             <td>{c.Id_Predio}</td>
@@ -111,6 +114,8 @@ function TablaCarros({ carros, seleccionar, refrescar }) {
         ))}
       </tbody>
     </table>
+      )}
+    </TablaDesplegable>
   );
 }
 

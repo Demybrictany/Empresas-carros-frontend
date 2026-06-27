@@ -1,4 +1,5 @@
 import { BASE_URL } from "../../config";
+import TablaDesplegable from "./TablaDesplegable";
 
 function TablaColaboradores({ colaboradores, seleccionar, refrescar }) {
 
@@ -13,6 +14,8 @@ function TablaColaboradores({ colaboradores, seleccionar, refrescar }) {
   };
 
   return (
+    <TablaDesplegable total={colaboradores.length}>
+      {(limite) => (
     <table className="table-modern">
       <thead>
         <tr>
@@ -24,7 +27,7 @@ function TablaColaboradores({ colaboradores, seleccionar, refrescar }) {
       </thead>
 
       <tbody>
-        {colaboradores.map((c) => (
+        {colaboradores.slice(0, limite).map((c) => (
           <tr key={c.Id_Colaborador}>
             <td>{c.Nombre}</td>
             <td>{c.Apellido}</td>
@@ -46,6 +49,8 @@ function TablaColaboradores({ colaboradores, seleccionar, refrescar }) {
         ))}
       </tbody>
     </table>
+      )}
+    </TablaDesplegable>
   );
 }
 

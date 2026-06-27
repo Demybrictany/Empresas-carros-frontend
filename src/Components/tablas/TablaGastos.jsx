@@ -1,4 +1,5 @@
 import { BASE_URL } from "../../config";
+import TablaDesplegable from "./TablaDesplegable";
 function TablaGastos({ gastos, seleccionar, refrescar }) {
 
   const eliminar = async (id) => {
@@ -9,6 +10,8 @@ function TablaGastos({ gastos, seleccionar, refrescar }) {
   };
 
   return (
+    <TablaDesplegable total={gastos.length}>
+      {(limite) => (
     <table className="table-modern">
       <thead>
         <tr>
@@ -22,7 +25,7 @@ function TablaGastos({ gastos, seleccionar, refrescar }) {
       </thead>
 
       <tbody>
-        {gastos.map((g) => (
+        {gastos.slice(0, limite).map((g) => (
           <tr key={g.Id_Gastos}>
             <td>{g.Id_Gastos}</td>
             <td>{g.Descripcion}</td>
@@ -37,6 +40,8 @@ function TablaGastos({ gastos, seleccionar, refrescar }) {
         ))}
       </tbody>
     </table>
+      )}
+    </TablaDesplegable>
   );
 }
 

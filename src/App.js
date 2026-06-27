@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 
 import VendedoresPage from "./pages/Vendedorespage";
+import DuenosCarroPage from "./pages/DuenosCarroPage";
 import Inicio from "./pages/Inicio";
 import CompradoresPage from "./pages/CompradoresPage";
 import ColaboradoresPage from "./pages/ColaboradoresPage";
@@ -13,6 +14,7 @@ import UsuariosPage from "./pages/UsuariosPage";
 import CrearUsuarioPage from "./pages/CrearUsuarioPage";
 import EstadisticasPage from "./pages/EstadisticasPage";
 import BuscadorPage from "./pages/BuscadorPage";
+import ComisionesPage from "./pages/ComisionesPage";
 
 import ProtectedRoute from "./Protected";
 import Unauthorized from "./pages/Unauthorized";
@@ -83,6 +85,15 @@ function App() {
             />
 
             <Route
+              path="/duenos-carro"
+              element={
+                <ProtectedRoute roles={["gerente","programador","colaborador"]}>
+                  <DuenosCarroPage />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
               path="/compradores"
               element={
                 <ProtectedRoute roles={["gerente","programador","colaborador"]}>
@@ -123,6 +134,15 @@ function App() {
               element={
                 <ProtectedRoute roles={["gerente","programador","colaborador"]}>
                   <VentasPage />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/comisiones"
+              element={
+                <ProtectedRoute roles={["gerente","programador"]}>
+                  <ComisionesPage />
                 </ProtectedRoute>
               }
             />

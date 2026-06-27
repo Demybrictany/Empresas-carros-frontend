@@ -10,13 +10,7 @@ export default function ModalEditarVenta({ venta, compradores, cerrar, refrescar
 
     let nuevo = { ...form, [name]: value };
 
-    if (name === "Porcentaje" && value !== "") {
-      nuevo.Comision = ((nuevo.PrecioVenta * value) / 100).toFixed(2);
-    }
-
-    if (name === "Comision" && value !== "") {
-      nuevo.Porcentaje = ((value / nuevo.PrecioVenta) * 100).toFixed(2);
-    }
+    // Porcentaje/Comision removed; handled via colaboradores
 
     setForm(nuevo);
   };
@@ -29,6 +23,7 @@ export default function ModalEditarVenta({ venta, compradores, cerrar, refrescar
       alert("Venta actualizada.");
 
       refrescar();
+      window.dispatchEvent(new Event("ventasActualizadas"));
       cerrar();
 
     } catch (err) {
@@ -74,21 +69,7 @@ export default function ModalEditarVenta({ venta, compradores, cerrar, refrescar
           onChange={handleChange}
         />
 
-        <label className="mt-3">Porcentaje</label>
-        <input
-          name="Porcentaje"
-          className="form-control"
-          value={form.Porcentaje}
-          onChange={handleChange}
-        />
-
-        <label className="mt-3">Comisión</label>
-        <input
-          name="Comision"
-          className="form-control"
-          value={form.Comision}
-          onChange={handleChange}
-        />
+        
 
         <div className="mt-4 d-flex justify-content-end">
           <button className="btn btn-secondary me-2" onClick={cerrar}>

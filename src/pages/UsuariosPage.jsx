@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { BASE_URL } from "../config";
+import TablaDesplegable from "../Components/tablas/TablaDesplegable";
 
 function UsuariosPage() {
 
@@ -231,6 +232,8 @@ return (
 
   </div>
 
+  <TablaDesplegable total={usuariosMostrados.length}>
+    {(limite) => (
   <table className="table-modern">
 
     <thead>
@@ -255,7 +258,7 @@ return (
 
       ) : (
 
-        usuariosMostrados.map((u) => (
+        usuariosMostrados.slice(0, limite).map((u) => (
 
             <tr key={u.Id_Usuario}>
 
@@ -282,6 +285,8 @@ return (
     </tbody>
 
   </table>
+    )}
+  </TablaDesplegable>
 
 </div>
 

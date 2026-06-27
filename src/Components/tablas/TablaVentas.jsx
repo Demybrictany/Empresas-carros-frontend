@@ -1,5 +1,6 @@
 import BotonContrato from "../botones/BotonContrato";
 import { BASE_URL } from "../../config";
+import TablaDesplegable from "./TablaDesplegable";
 
 function TablaVentas({ ventas, seleccionar, refrescar }) {
 
@@ -11,6 +12,8 @@ function TablaVentas({ ventas, seleccionar, refrescar }) {
   };
 
   return (
+    <TablaDesplegable total={ventas.length}>
+      {(limite) => (
     <table className="table-modern">
       <thead>
         <tr>
@@ -24,7 +27,7 @@ function TablaVentas({ ventas, seleccionar, refrescar }) {
       </thead>
 
       <tbody>
-        {ventas.map((v) => (
+        {ventas.slice(0, limite).map((v) => (
           <tr key={v.Id_Venta}>
 
             <td>{v.Id_Venta}</td>
@@ -67,6 +70,8 @@ function TablaVentas({ ventas, seleccionar, refrescar }) {
         ))}
       </tbody>
     </table>
+      )}
+    </TablaDesplegable>
   );
 }
 

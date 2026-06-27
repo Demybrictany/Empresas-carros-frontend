@@ -9,8 +9,7 @@ export default function VentaForm({ carros, compradores, refrescarVentas, refres
     Id_Compra: "",
     Fecha: "",
     PrecioVenta: "",
-    Porcentaje: "",
-    Comision: "",
+    // Colaboradores handled in ventas page
   });
 
   const [carroInfo, setCarroInfo] = useState(null);
@@ -22,13 +21,7 @@ export default function VentaForm({ carros, compradores, refrescarVentas, refres
 
     let nuevo = { ...form, [name]: value };
 
-    if (name === "Porcentaje" && value !== "") {
-      nuevo.Comision = ((nuevo.PrecioVenta * value) / 100).toFixed(2);
-    }
-
-    if (name === "Comision" && value !== "") {
-      nuevo.Porcentaje = ((value / nuevo.PrecioVenta) * 100).toFixed(2);
-    }
+    // porcentaje/comision removed; commissions managed via colaboradores
 
     if (name === "Id_Predio") {
       const info = carros.find((c) => c.Id_Predio === value);
@@ -46,8 +39,7 @@ export default function VentaForm({ carros, compradores, refrescarVentas, refres
     if (form.Fecha > hoy)
       return alert("La fecha no puede ser futura.");
 
-    if (!form.Porcentaje && !form.Comision)
-      return alert("Debe ingresar porcentaje o comisión.");
+    // no longer required: commissions come from colaboradores
 
     try {
 
@@ -63,8 +55,6 @@ export default function VentaForm({ carros, compradores, refrescarVentas, refres
         Id_Compra: "",
         Fecha: "",
         PrecioVenta: "",
-        Porcentaje: "",
-        Comision: "",
       });
 
       setCarroInfo(null);
@@ -133,22 +123,7 @@ export default function VentaForm({ carros, compradores, refrescarVentas, refres
             value={form.PrecioVenta}
             onChange={handleChange}
           />
-
-          <label className="mt-3">Porcentaje (%)</label>
-          <input
-            name="Porcentaje"
-            className="form-control"
-            value={form.Porcentaje}
-            onChange={handleChange}
-          />
-
-          <label className="mt-3">Comisión (Q)</label>
-          <input
-            name="Comision"
-            className="form-control"
-            value={form.Comision}
-            onChange={handleChange}
-          />
+          
 
           <button className="btn btn-primary mt-3" onClick={registrar}>
             Registrar

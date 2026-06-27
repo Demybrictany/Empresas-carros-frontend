@@ -4,7 +4,6 @@ import { BASE_URL } from "../config";
 
 function VendedoresPage() {
   const [vendedores, setVendedores] = useState([]);
-
   const [Id_Vendedor, setId] = useState(null);
 
   const [Nombre, setNombre] = useState("");
@@ -12,28 +11,15 @@ function VendedoresPage() {
   const [Dpi, setDpi] = useState("");
   const [Foto_DPI, setFotoDPI] = useState("");
   const [Direccion, setDireccion] = useState("");
-  const [Relacion_Dueño, setRelacion] = useState("");
-
+  const [RelacionDueno, setRelacion] = useState("");
   const [busqueda, setBusqueda] = useState("");
 
-  // -------------------------------
-  // VALIDACIONES
-  // -------------------------------
-
   const validarFormulario = () => {
-    if (!Nombre.trim()) return "El nombre es obligatorio.";
-
-    if (!Telefono.trim()) return "El teléfono es obligatorio.";
-
-    if (!/^\d{13}$/.test(Dpi))
-      return "El DPI debe tener exactamente 13 dígitos.";
-
+    if (!Nombre.trim()) return "El nombre del vendedor es obligatorio.";
+    if (!Telefono.trim()) return "El telefono del vendedor es obligatorio.";
+    if (!/^\d{13}$/.test(Dpi)) return "El DPI del vendedor debe tener exactamente 13 digitos.";
     return null;
   };
-
-  // -------------------------------
-  // CARGAR VENDEDORES
-  // -------------------------------
 
   const cargarVendedores = () => {
     fetch(`${BASE_URL}/vendedores`)
@@ -45,39 +31,14 @@ function VendedoresPage() {
     cargarVendedores();
   }, []);
 
-  // -------------------------------
-  // CONVERTIR IMAGEN
-  // -------------------------------
-
   const convertirImagen = (e) => {
     const file = e.target.files[0];
     if (!file) return;
 
     const reader = new FileReader();
-    reader.onloadend = () => {
-      setFotoDPI(reader.result);
-    };
-
+    reader.onloadend = () => setFotoDPI(reader.result);
     reader.readAsDataURL(file);
   };
-
-  // -------------------------------
-  // SELECCIONAR PARA EDITAR
-  // -------------------------------
-
-  const seleccionar = (v) => {
-    setId(v.Id_Vendedor);
-    setNombre(v.Nombre);
-    setTelefono(v.Telefono);
-    setDpi(v.Dpi);
-    setFotoDPI(v.Foto_DPI);
-    setDireccion(v.Direccion);
-    setRelacion(v.Relacion_Dueño);
-  };
-
-  // -------------------------------
-  // LIMPIAR
-  // -------------------------------
 
   const limpiar = () => {
     setId(null);
@@ -89,9 +50,25 @@ function VendedoresPage() {
     setRelacion("");
   };
 
-  // -------------------------------
-  // AGREGAR
-  // -------------------------------
+  const seleccionar = (v) => {
+    setId(v.Id_Vendedor);
+    setNombre(v.Nombre || "");
+    setTelefono(v.Telefono || "");
+    setDpi(v.Dpi || "");
+    setFotoDPI(v.Foto_DPI || "");
+    setDireccion(v.Direccion || "");
+    setRelacion(v.Relacion_Dueno || v.Relacion_Dueño || "");
+  };
+
+  const crearBody = () => ({
+    Nombre,
+    Telefono,
+    Dpi,
+    Foto_DPI,
+    Direccion,
+    Relacion_Dueno: RelacionDueno,
+    Relacion_Dueño: RelacionDueno,
+  });
 
   const agregar = async () => {
     const error = validarFormulario();
@@ -99,26 +76,13 @@ function VendedoresPage() {
 
     await fetch(`${BASE_URL}/vendedores`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        Nombre,
-        Telefono,
-        Dpi,
-        Foto_DPI,
-        Direccion,
-        Relacion_Dueño,
-      }),
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(crearBody()),
     });
 
     limpiar();
     cargarVendedores();
   };
-
-  // -------------------------------
-  // ACTUALIZAR
-  // -------------------------------
 
   const actualizar = async () => {
     const error = validarFormulario();
@@ -126,60 +90,38 @@ function VendedoresPage() {
 
     await fetch(`${BASE_URL}/vendedores/${Id_Vendedor}`, {
       method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        Nombre,
-        Telefono,
-        Dpi,
-        Foto_DPI,
-        Direccion,
-        Relacion_Dueño,
-      }),
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(crearBody()),
     });
 
     limpiar();
     cargarVendedores();
   };
 
-  // -------------------------------
-  // BUSQUEDA
-  // -------------------------------
-
   const vendedoresFiltrados = vendedores.filter((v) => {
     const texto = busqueda.toLowerCase();
+    const relacion = v.Relacion_Dueno || v.Relacion_Dueño || "";
 
     return (
-      v.Nombre.toLowerCase().includes(texto) ||
-      v.Telefono.toLowerCase().includes(texto) ||
-      v.Dpi.toLowerCase().includes(texto) ||
-      (v.Direccion ? v.Direccion.toLowerCase().includes(texto) : false) ||
-      (v.Relacion_Dueño
-        ? v.Relacion_Dueño.toLowerCase().includes(texto)
-        : false)
+      (v.Nombre || "").toLowerCase().includes(texto) ||
+      (v.Telefono || "").toLowerCase().includes(texto) ||
+      (v.Dpi || "").toLowerCase().includes(texto) ||
+      (v.Direccion || "").toLowerCase().includes(texto) ||
+      relacion.toLowerCase().includes(texto)
     );
   });
 
-  // -------------------------------
-  // RENDER
-  // -------------------------------
-
   return (
     <div className="page-container">
-      <h1>Gestión de Vendedores</h1>
+      <h1>Gestion de Vendedores</h1>
 
       <div className="form-box">
         <h3>{Id_Vendedor ? "Editar Vendedor" : "Nuevo Vendedor"}</h3>
 
-        <input
-          placeholder="Nombre"
-          value={Nombre}
-          onChange={(e) => setNombre(e.target.value)}
-        />
+        <input placeholder="Nombre" value={Nombre} onChange={(e) => setNombre(e.target.value)} />
 
         <input
-          placeholder="Teléfono"
+          placeholder="Telefono"
           value={Telefono}
           onChange={(e) => {
             if (/^\d*$/.test(e.target.value)) setTelefono(e.target.value);
@@ -187,7 +129,7 @@ function VendedoresPage() {
         />
 
         <input
-          placeholder="DPI (13 dígitos)"
+          placeholder="DPI (13 digitos)"
           value={Dpi}
           maxLength={13}
           onChange={(e) => {
@@ -198,46 +140,33 @@ function VendedoresPage() {
         <label>Foto DPI:</label>
         <input type="file" accept="image/*" onChange={convertirImagen} />
 
-        <input
-          placeholder="Dirección"
-          value={Direccion}
-          onChange={(e) => setDireccion(e.target.value)}
-        />
+        <input placeholder="Direccion" value={Direccion} onChange={(e) => setDireccion(e.target.value)} />
 
-        <select
-          value={Relacion_Dueño}
-          onChange={(e) => setRelacion(e.target.value)}
-        >
-          <option value="">Seleccione relación</option>
+        <select value={RelacionDueno} onChange={(e) => setRelacion(e.target.value)}>
+          <option value="">Seleccione relacion</option>
+          <option value="Mismo dueño">Mismo dueño</option>
           <option value="Hermano">Hermano</option>
           <option value="Padre">Padre</option>
           <option value="Madre">Madre</option>
           <option value="Amigo">Amigo</option>
+          <option value="Intermediario">Intermediario</option>
         </select>
 
         {Id_Vendedor ? (
           <>
-            <button className="btn-primary" onClick={actualizar}>
-              Actualizar
-            </button>
-
-            <button className="btn-secondary" onClick={limpiar}>
-              Cancelar
-            </button>
+            <button className="btn-primary" onClick={actualizar}>Actualizar</button>
+            <button className="btn-secondary" onClick={limpiar}>Cancelar</button>
           </>
         ) : (
-          <button className="btn-primary" onClick={agregar}>
-            Agregar
-          </button>
+          <button className="btn-primary" onClick={agregar}>Agregar</button>
         )}
       </div>
 
-      {/* BUSCADOR */}
       <div className="search-row">
         <input
           className="search-input-inside"
           type="text"
-          placeholder="Buscar Vendedor..."
+          placeholder="Buscar vendedor..."
           value={busqueda}
           onChange={(e) => setBusqueda(e.target.value)}
         />

@@ -1,4 +1,5 @@
 import { BASE_URL } from "../../config";
+import TablaDesplegable from "./TablaDesplegable";
 function TablaCompradores({ compradores, seleccionarComprador, refrescar }) {
 
 
@@ -10,6 +11,8 @@ function TablaCompradores({ compradores, seleccionarComprador, refrescar }) {
   };
 
   return (
+    <TablaDesplegable total={compradores.length}>
+      {(limite) => (
     <table className="table-modern">
       <thead>
         <tr>
@@ -23,7 +26,7 @@ function TablaCompradores({ compradores, seleccionarComprador, refrescar }) {
       </thead>
 
       <tbody>
-        {compradores.map((c) => (
+        {compradores.slice(0, limite).map((c) => (
           <tr key={c.Id_Compra}>
             <td>
               {c.Foto_DPI ? (
@@ -62,6 +65,8 @@ function TablaCompradores({ compradores, seleccionarComprador, refrescar }) {
         ))}
       </tbody>
     </table>
+      )}
+    </TablaDesplegable>
   );
 }
 

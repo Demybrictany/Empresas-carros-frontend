@@ -1,4 +1,5 @@
 import { BASE_URL } from "../../config";
+import TablaDesplegable from "./TablaDesplegable";
 
 function TablaVendedores({ vendedores, seleccionar, refrescar }) {
 
@@ -25,7 +26,8 @@ function TablaVendedores({ vendedores, seleccionar, refrescar }) {
   };
 
   return (
-
+    <TablaDesplegable total={vendedores.length}>
+      {(limite) => (
     <table className="table-modern">
 
       <thead>
@@ -55,7 +57,7 @@ function TablaVendedores({ vendedores, seleccionar, refrescar }) {
 
         ) : (
 
-          vendedores.map((v) => (
+          vendedores.slice(0, limite).map((v) => (
 
             <tr key={v.Id_Vendedor}>
 
@@ -112,6 +114,8 @@ function TablaVendedores({ vendedores, seleccionar, refrescar }) {
       </tbody>
 
     </table>
+      )}
+    </TablaDesplegable>
 
   );
 
