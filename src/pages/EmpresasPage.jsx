@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { apiJson } from "../utils/api";
 import { backendErrorMessage, confirm, error, success, warning } from "../utils/alerts";
-import { LOGIN_THEME } from "../utils/session";
+import { applyEmpresaTheme, getUsuario, LOGIN_THEME, saveSession } from "../utils/session";
 
 const emptyEmpresa = {
   Nombre_Empresa: "",
@@ -23,17 +23,23 @@ const emptyUsuarioEmpresa = {
   Correo: "",
   Contrasena: "",
   Rol: "Gerente",
+  Estado: "Activo",
 };
 
 function EmpresasPage({ vista = "crear" }) {
   const [empresas, setEmpresas] = useState([]);
   const [form, setForm] = useState(emptyEmpresa);
   const [usuarioEmpresa, setUsuarioEmpresa] = useState(emptyUsuarioEmpresa);
+  const [usuariosEmpresa, setUsuariosEmpresa] = useState([]);
+  const [usuarioEditId, setUsuarioEditId] = useState(null);
+  const [guardandoUsuario, setGuardandoUsuario] = useState(false);
+  const [cargandoUsuarios, setCargandoUsuarios] = useState(false);
   const [editId, setEditId] = useState(null);
   const [guardando, setGuardando] = useState(false);
   const [estadoEmpresaId, setEstadoEmpresaId] = useState(null);
   const esCrear = vista === "crear";
   const esAdministrar = vista === "administrar";
+  const usuarioActual = getUsuario();
 
   const cargarEmpresas = async () => {
     try {
@@ -49,7 +55,19 @@ function EmpresasPage({ vista = "crear" }) {
   }, []);
 
   const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+    const nuevaEmpresa = { ...form, [e.target.name]: e.target.value };
+    setForm(nuevaEmpresa);
+
+    if (
+      e.target.name.startsWith("Color_") &&
+      Number(editId) === Number(usuarioActual?.Id_Empresa)
+    ) {
+      applyEmpresaTheme(nuevaEmpresa);
+    }
+  };
+
+  const handleUsuarioChange = (e) => {
+    setUsuarioEmpresa({ ...usuarioEmpresa, [e.target.name]: e.target.value });
   };
 
   const cargarLogo = (e) => {
@@ -65,12 +83,52 @@ function EmpresasPage({ vista = "crear" }) {
     setEditId(null);
     setForm(emptyEmpresa);
     setUsuarioEmpresa(emptyUsuarioEmpresa);
+    setUsuariosEmpresa([]);
+    setUsuarioEditId(null);
   };
 
-  const seleccionar = (empresa) => {
+  const cargarUsuariosEmpresa = async (idEmpresa) => {
+    try {
+      setCargandoUsuarios(true);
+      const data = await apiJson("/usuarios");
+      const lista = Array.isArray(data) ? data : data?.usuarios || [];
+      const usuarios = lista.filter((usuario) => Number(usuario.Id_Empresa) === Number(idEmpresa));
+      setUsuariosEmpresa(usuarios);
+      return usuarios;
+    } catch (err) {
+      setUsuariosEmpresa([]);
+      error(backendErrorMessage(err));
+      return [];
+    } finally {
+      setCargandoUsuarios(false);
+    }
+  };
+
+  const seleccionarUsuario = (usuario) => {
+    setUsuarioEditId(usuario.Id_Usuario);
+    setUsuarioEmpresa({
+      Nombre: usuario.Nombre || "",
+      Correo: usuario.Correo || "",
+      Contrasena: "",
+      Rol: usuario.Rol || "Gerente",
+      Estado: usuario.Estado || "Activo",
+    });
+  };
+
+  const seleccionar = async (empresa) => {
     setEditId(empresa.Id_Empresa);
     setForm({ ...emptyEmpresa, ...empresa });
     setUsuarioEmpresa(emptyUsuarioEmpresa);
+    setUsuarioEditId(null);
+
+    if (Number(empresa.Id_Empresa) === Number(usuarioActual?.Id_Empresa)) {
+      applyEmpresaTheme({ ...emptyEmpresa, ...empresa });
+    }
+
+    const usuarios = await cargarUsuariosEmpresa(empresa.Id_Empresa);
+    if (usuarios.length === 1) {
+      seleccionarUsuario(usuarios[0]);
+    }
   };
 
   const empresaCreadaId = async (respuesta, nombreEmpresa) => {
@@ -151,6 +209,15 @@ function EmpresasPage({ vista = "crear" }) {
         });
       }
 
+      if (editId && Number(editId) === Number(usuarioActual?.Id_Empresa)) {
+        const nuevaEmpresa = { ...usuarioActual.empresa, ...form };
+        saveSession({
+          token: localStorage.getItem("token"),
+          usuario: { ...usuarioActual, empresa: nuevaEmpresa },
+        });
+        applyEmpresaTheme(nuevaEmpresa);
+      }
+
       limpiar();
       success(esCrear ? "Empresa y usuario creados correctamente." : "Empresa actualizada.");
       await cargarEmpresas();
@@ -189,6 +256,60 @@ function EmpresasPage({ vista = "crear" }) {
     }
   };
 
+  const guardarUsuario = async () => {
+    if (guardandoUsuario) return;
+
+    if (!usuarioEditId) {
+      warning("Seleccione un usuario para editar.");
+      return;
+    }
+
+    if (!usuarioEmpresa.Nombre.trim()) {
+      warning("Ingrese el nombre del usuario.");
+      return;
+    }
+
+    if (!usuarioEmpresa.Correo.trim()) {
+      warning("Ingrese el correo del usuario.");
+      return;
+    }
+
+    if (!usuarioEmpresa.Correo.includes("@") || !usuarioEmpresa.Correo.includes(".")) {
+      warning("Correo invalido.");
+      return;
+    }
+
+    try {
+      setGuardandoUsuario(true);
+
+      const payload = {
+        Nombre: usuarioEmpresa.Nombre,
+        Correo: usuarioEmpresa.Correo,
+        Rol: usuarioEmpresa.Rol,
+        Estado: usuarioEmpresa.Estado,
+        Id_Empresa: editId,
+      };
+
+      if (usuarioEmpresa.Contrasena.trim()) {
+        payload.Contrasena = usuarioEmpresa.Contrasena;
+      }
+
+      await apiJson(`/usuarios/${usuarioEditId}`, {
+        method: "PUT",
+        body: JSON.stringify(payload),
+      });
+
+      success("Usuario actualizado correctamente.");
+      setUsuarioEmpresa(emptyUsuarioEmpresa);
+      setUsuarioEditId(null);
+      await cargarUsuariosEmpresa(editId);
+    } catch (err) {
+      error(backendErrorMessage(err));
+    } finally {
+      setGuardandoUsuario(false);
+    }
+  };
+
   return (
     <div className="page-container">
       <h1>{esCrear ? "Crear Empresa" : "Administrar Empresas"}</h1>
@@ -223,24 +344,28 @@ function EmpresasPage({ vista = "crear" }) {
             <>
               <h3>Usuario de la empresa</h3>
               <input
+                name="Nombre"
                 placeholder="Nombre del usuario"
                 value={usuarioEmpresa.Nombre}
-                onChange={(e) => setUsuarioEmpresa({ ...usuarioEmpresa, Nombre: e.target.value })}
+                onChange={handleUsuarioChange}
               />
               <input
+                name="Correo"
                 placeholder="Correo del usuario"
                 value={usuarioEmpresa.Correo}
-                onChange={(e) => setUsuarioEmpresa({ ...usuarioEmpresa, Correo: e.target.value })}
+                onChange={handleUsuarioChange}
               />
               <input
+                name="Contrasena"
                 type="password"
                 placeholder="Contrasena del usuario"
                 value={usuarioEmpresa.Contrasena}
-                onChange={(e) => setUsuarioEmpresa({ ...usuarioEmpresa, Contrasena: e.target.value })}
+                onChange={handleUsuarioChange}
               />
               <select
+                name="Rol"
                 value={usuarioEmpresa.Rol}
-                onChange={(e) => setUsuarioEmpresa({ ...usuarioEmpresa, Rol: e.target.value })}
+                onChange={handleUsuarioChange}
               >
                 <option value="Gerente">Gerente</option>
                 <option value="Vendedor">Vendedor</option>
@@ -252,6 +377,70 @@ function EmpresasPage({ vista = "crear" }) {
             {guardando ? "Guardando..." : esCrear ? "Crear empresa y usuario" : "Actualizar"}
           </button>
           {esAdministrar && <button className="btn-secondary" onClick={limpiar} disabled={guardando}>Cancelar</button>}
+        </div>
+      )}
+
+      {esAdministrar && editId && (
+        <div className="form-box">
+          <h3>Usuarios de la empresa</h3>
+
+          {cargandoUsuarios ? (
+            <p>Cargando usuarios...</p>
+          ) : usuariosEmpresa.length === 0 ? (
+            <p>No hay usuarios asociados a esta empresa.</p>
+          ) : (
+            <select
+              value={usuarioEditId || ""}
+              onChange={(e) => {
+                const usuario = usuariosEmpresa.find((item) => Number(item.Id_Usuario) === Number(e.target.value));
+                if (usuario) seleccionarUsuario(usuario);
+              }}
+            >
+              <option value="">Seleccione usuario</option>
+              {usuariosEmpresa.map((usuario) => (
+                <option key={usuario.Id_Usuario} value={usuario.Id_Usuario}>
+                  {usuario.Nombre} - {usuario.Correo} - {usuario.Rol}
+                </option>
+              ))}
+            </select>
+          )}
+
+          {usuarioEditId && (
+            <>
+              <input
+                name="Nombre"
+                placeholder="Nombre del usuario"
+                value={usuarioEmpresa.Nombre}
+                onChange={handleUsuarioChange}
+              />
+              <input
+                name="Correo"
+                placeholder="Correo del usuario"
+                value={usuarioEmpresa.Correo}
+                onChange={handleUsuarioChange}
+              />
+              <input
+                name="Contrasena"
+                type="password"
+                placeholder="Nueva contrasena (opcional)"
+                value={usuarioEmpresa.Contrasena}
+                onChange={handleUsuarioChange}
+              />
+              <select name="Rol" value={usuarioEmpresa.Rol} onChange={handleUsuarioChange}>
+                <option value="Gerente">Gerente</option>
+                <option value="Vendedor">Vendedor</option>
+              </select>
+              <select name="Estado" value={usuarioEmpresa.Estado} onChange={handleUsuarioChange}>
+                <option value="Activo">Activo</option>
+                <option value="Inactivo">Inactivo</option>
+                <option value="Bloqueado">Bloqueado</option>
+              </select>
+
+              <button className="btn-primary" onClick={guardarUsuario} disabled={guardandoUsuario}>
+                {guardandoUsuario ? "Guardando..." : "Actualizar usuario"}
+              </button>
+            </>
+          )}
         </div>
       )}
 

@@ -23,6 +23,8 @@ function ConfiguracionEmpresaPage() {
     try {
       const empresaData = await apiJson(`/empresa/${usuario.Id_Empresa}`);
       setEmpresa(empresaData);
+      saveSession({ token: localStorage.getItem("token"), usuario: { ...usuario, empresa: empresaData } });
+      applyEmpresaTheme(empresaData);
 
       const configs = await apiJson("/contrato-configuracion");
       const config = Array.isArray(configs) ? configs[0] : null;
@@ -41,7 +43,12 @@ function ConfiguracionEmpresaPage() {
   }, []);
 
   const handleEmpresa = (e) => {
-    setEmpresa({ ...empresa, [e.target.name]: e.target.value });
+    const nuevaEmpresa = { ...empresa, [e.target.name]: e.target.value };
+    setEmpresa(nuevaEmpresa);
+
+    if (e.target.name.startsWith("Color_")) {
+      applyEmpresaTheme(nuevaEmpresa);
+    }
   };
 
   const handleContrato = (e) => {

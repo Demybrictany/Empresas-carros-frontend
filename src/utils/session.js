@@ -87,9 +87,9 @@ export const applyEmpresaTheme = (empresa = getEmpresa()) => {
   const principal = empresa.Color_Principal || EMPRESA_DEFAULT.Color_Principal;
   const secundario = empresa.Color_Secundario || EMPRESA_DEFAULT.Color_Secundario;
   const boton = empresa.Color_Boton || EMPRESA_DEFAULT.Color_Boton;
-  const principalRgb = hexToRgb(principal) || "13, 110, 253";
-  const secundarioRgb = hexToRgb(secundario) || "13, 27, 42";
-  const botonRgb = hexToRgb(boton) || "25, 135, 84";
+  const principalRgb = hexToRgb(principal) || "89, 70, 70";
+  const secundarioRgb = hexToRgb(secundario) || "61, 48, 48";
+  const botonRgb = hexToRgb(boton) || "139, 111, 94";
 
   const root = document.documentElement;
   root.style.setProperty("--color-principal", principal);
