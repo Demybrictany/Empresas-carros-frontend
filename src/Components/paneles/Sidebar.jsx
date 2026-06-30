@@ -122,7 +122,7 @@ const sections = [
   {
     title: "Programador",
     items: [
-      { label: "Mi\nEmpresa", to: "/configuracion-empresa", icon: "dashboard", roles: ["programador"] },
+      { label: "Mi\nEmpresa", to: "/mi-empresa", icon: "dashboard", roles: ["programador"] },
       { label: "Crear\nEmpresa", to: "/crear-empresa", icon: "addUser", roles: ["programador"] },
       { label: "Administrar\nEmpresas", to: "/administrar-empresas", icon: "dashboard", roles: ["programador"] },
     ],

@@ -114,6 +114,15 @@ function AppContent() {
             />
 
             <Route
+              path="/mi-empresa"
+              element={
+                <ProtectedRoute roles={["Programador"]}>
+                  <ConfiguracionEmpresaPage />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
               path="/crear-usuario"
               element={
                 <ProtectedRoute roles={ADMIN}>
