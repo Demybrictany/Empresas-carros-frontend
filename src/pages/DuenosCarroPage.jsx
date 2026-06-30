@@ -13,6 +13,7 @@ function DuenosCarroPage() {
   const [Telefono, setTelefono] = useState("");
   const [Direccion, setDireccion] = useState("");
   const [busqueda, setBusqueda] = useState("");
+  const [guardando, setGuardando] = useState(false);
 
   const validarFormulario = () => {
     if (!Nombre.trim()) return "El nombre del dueno es obligatorio.";
@@ -49,6 +50,8 @@ function DuenosCarroPage() {
   };
 
   const guardar = async () => {
+    if (guardando) return;
+
     const validationError = validarFormulario();
     if (validationError) return warning(validationError);
 
@@ -56,6 +59,7 @@ function DuenosCarroPage() {
     const method = Id_Dueno_Carro ? "PUT" : "POST";
 
     try {
+      setGuardando(true);
       await apiJson(url, {
         method,
         body: JSON.stringify({
@@ -72,6 +76,8 @@ function DuenosCarroPage() {
       cargarDuenos();
     } catch (err) {
       error(backendErrorMessage(err));
+    } finally {
+      setGuardando(false);
     }
   };
 
@@ -118,11 +124,15 @@ function DuenosCarroPage() {
 
         {Id_Dueno_Carro ? (
           <>
-            <button className="btn-primary" onClick={guardar}>Actualizar Dueno</button>
-            <button className="btn-secondary" onClick={limpiar}>Cancelar</button>
+            <button className="btn-primary" onClick={guardar} disabled={guardando}>
+              {guardando ? "Guardando..." : "Actualizar Dueno"}
+            </button>
+            <button className="btn-secondary" onClick={limpiar} disabled={guardando}>Cancelar</button>
           </>
         ) : (
-          <button className="btn-primary" onClick={guardar}>Guardar Dueno</button>
+          <button className="btn-primary" onClick={guardar} disabled={guardando}>
+            {guardando ? "Guardando..." : "Guardar Dueno"}
+          </button>
         )}
       </div>
 

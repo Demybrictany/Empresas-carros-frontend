@@ -13,6 +13,7 @@ function VendedoresPage() {
   const [Direccion, setDireccion] = useState("");
   const [RelacionDueno, setRelacion] = useState("");
   const [busqueda, setBusqueda] = useState("");
+  const [guardando, setGuardando] = useState(false);
 
   const validarFormulario = () => {
     if (!Nombre.trim()) return "El nombre del vendedor es obligatorio.";
@@ -58,10 +59,13 @@ function VendedoresPage() {
   });
 
   const agregar = async () => {
+    if (guardando) return;
+
     const validationError = validarFormulario();
     if (validationError) return warning(validationError);
 
     try {
+      setGuardando(true);
       await apiJson("/vendedores", {
         method: "POST",
         body: JSON.stringify(crearBody()),
@@ -72,14 +76,19 @@ function VendedoresPage() {
       cargarVendedores();
     } catch (err) {
       error(backendErrorMessage(err));
+    } finally {
+      setGuardando(false);
     }
   };
 
   const actualizar = async () => {
+    if (guardando) return;
+
     const validationError = validarFormulario();
     if (validationError) return warning(validationError);
 
     try {
+      setGuardando(true);
       await apiJson(`/vendedores/${Id_Vendedor}`, {
         method: "PUT",
         body: JSON.stringify(crearBody()),
@@ -90,6 +99,8 @@ function VendedoresPage() {
       cargarVendedores();
     } catch (err) {
       error(backendErrorMessage(err));
+    } finally {
+      setGuardando(false);
     }
   };
 
@@ -146,11 +157,15 @@ function VendedoresPage() {
 
         {Id_Vendedor ? (
           <>
-            <button className="btn-primary" onClick={actualizar}>Actualizar</button>
-            <button className="btn-secondary" onClick={limpiar}>Cancelar</button>
+            <button className="btn-primary" onClick={actualizar} disabled={guardando}>
+              {guardando ? "Guardando..." : "Actualizar"}
+            </button>
+            <button className="btn-secondary" onClick={limpiar} disabled={guardando}>Cancelar</button>
           </>
         ) : (
-          <button className="btn-primary" onClick={agregar}>Agregar</button>
+          <button className="btn-primary" onClick={agregar} disabled={guardando}>
+            {guardando ? "Guardando..." : "Agregar"}
+          </button>
         )}
       </div>
 

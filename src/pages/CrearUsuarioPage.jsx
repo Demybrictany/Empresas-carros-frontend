@@ -11,12 +11,14 @@ function CrearUsuarioPage() {
     Contrasena: "",
     Rol: "Vendedor",
   });
+  const [guardando, setGuardando] = useState(false);
 
   const handleChange = (e) =>
     setForm({ ...form, [e.target.name]: e.target.value });
 
   const submit = async (e) => {
     e.preventDefault();
+    if (guardando) return;
 
     if (!token) {
       warning("No autorizado.");
@@ -24,6 +26,7 @@ function CrearUsuarioPage() {
     }
 
     try {
+      setGuardando(true);
       const data = await registrarUsuario(form);
 
       if (data.error) {
@@ -36,6 +39,8 @@ function CrearUsuarioPage() {
     } catch (err) {
       console.error(err);
       error(backendErrorMessage(err));
+    } finally {
+      setGuardando(false);
     }
   };
 
@@ -60,8 +65,8 @@ function CrearUsuarioPage() {
             <option value="Gerente">Gerente</option>
           </select>
 
-          <button type="submit" className="btn-primary">
-            Registrar
+          <button type="submit" className="btn-primary" disabled={guardando}>
+            {guardando ? "Guardando..." : "Registrar"}
           </button>
         </form>
       </div>

@@ -9,10 +9,13 @@ function LoginPage() {
 
   const [Correo, setCorreo] = useState("");
   const [Contrasena, setContrasena] = useState("");
+  const [cargando, setCargando] = useState(false);
 
   const API = `${BASE_URL}/usuarios/login`;
 
   const iniciarSesion = async () => {
+    if (cargando) return;
+
     const correo = Correo.trim();
 
     if (!correo || !Contrasena) {
@@ -21,6 +24,7 @@ function LoginPage() {
     }
 
     try {
+      setCargando(true);
       const res = await fetch(API, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -35,7 +39,7 @@ function LoginPage() {
       const data = await res.json();
 
       if (!res.ok) {
-        error(data.error || "Revise sus credenciales e intente nuevamente.");
+        error("Usuario o contrasena invalido.");
         return;
       }
 
@@ -57,6 +61,8 @@ function LoginPage() {
     } catch (err) {
       console.error("ERROR LOGIN:", err);
       error("No se pudo conectar con el servidor. Verifique que el backend este activo.");
+    } finally {
+      setCargando(false);
     }
   };
 
@@ -81,8 +87,8 @@ function LoginPage() {
           onChange={(e) => setContrasena(e.target.value)}
         />
 
-        <button className="btn-primary" onClick={iniciarSesion}>
-          Ingresar
+        <button className="btn-primary" onClick={iniciarSesion} disabled={cargando}>
+          {cargando ? "Ingresando..." : "Ingresar"}
         </button>
       </div>
     </div>

@@ -10,6 +10,7 @@ function ColaboradoresPage() {
   const [Apellido, setApellido] = useState("");
   const [DPI, setDPI] = useState("");
   const [busqueda, setBusqueda] = useState("");
+  const [guardando, setGuardando] = useState(false);
 
   const validarDPI = (dpi) => /^\d{13}$/.test(dpi);
 
@@ -48,10 +49,13 @@ function ColaboradoresPage() {
   };
 
   const guardar = async () => {
+    if (guardando) return;
+
     const validationError = validarFormulario();
     if (validationError) return warning(validationError);
 
     try {
+      setGuardando(true);
       await apiJson(Id_Colaborador ? `/colaboradores/${Id_Colaborador}` : "/colaboradores", {
         method: Id_Colaborador ? "PUT" : "POST",
         body: JSON.stringify({ Nombre, Apellido, DPI }),
@@ -62,6 +66,8 @@ function ColaboradoresPage() {
       cargarColaboradores();
     } catch (err) {
       error(backendErrorMessage(err));
+    } finally {
+      setGuardando(false);
     }
   };
 
@@ -94,16 +100,16 @@ function ColaboradoresPage() {
 
         {Id_Colaborador ? (
           <>
-            <button className="btn-primary" onClick={guardar}>
-              Actualizar
+            <button className="btn-primary" onClick={guardar} disabled={guardando}>
+              {guardando ? "Guardando..." : "Actualizar"}
             </button>
-            <button className="btn-secondary" onClick={limpiar}>
+            <button className="btn-secondary" onClick={limpiar} disabled={guardando}>
               Cancelar
             </button>
           </>
         ) : (
-          <button className="btn-primary" onClick={guardar}>
-            Agregar
+          <button className="btn-primary" onClick={guardar} disabled={guardando}>
+            {guardando ? "Guardando..." : "Agregar"}
           </button>
         )}
       </div>

@@ -13,6 +13,7 @@ export default function VentaForm({ carros, compradores, refrescarVentas, refres
   });
 
   const [carroInfo, setCarroInfo] = useState(null);
+  const [guardando, setGuardando] = useState(false);
 
   const hoy = new Date().toISOString().slice(0, 10);
 
@@ -32,6 +33,7 @@ export default function VentaForm({ carros, compradores, refrescarVentas, refres
   };
 
   const registrar = async () => {
+    if (guardando) return;
 
     if (!form.Id_Predio || !form.Id_Compra)
       return warning("Complete todos los campos obligatorios.");
@@ -42,6 +44,7 @@ export default function VentaForm({ carros, compradores, refrescarVentas, refres
     // no longer required: commissions come from colaboradores
 
     try {
+      setGuardando(true);
 
       await apiJson("/ventas", {
         method: "POST",
@@ -65,6 +68,8 @@ export default function VentaForm({ carros, compradores, refrescarVentas, refres
     } catch (err) {
       console.error(err);
       error(backendErrorMessage(err));
+    } finally {
+      setGuardando(false);
     }
   };
 
@@ -128,8 +133,8 @@ export default function VentaForm({ carros, compradores, refrescarVentas, refres
           />
           
 
-          <button className="btn btn-primary mt-3" onClick={registrar}>
-            Registrar
+          <button className="btn btn-primary mt-3" onClick={registrar} disabled={guardando}>
+            {guardando ? "Guardando..." : "Registrar"}
           </button>
 
         </div>

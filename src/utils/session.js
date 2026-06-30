@@ -1,10 +1,14 @@
+export const LOGIN_THEME = {
+  Color_Principal: "#594646",
+  Color_Secundario: "#3D3030",
+  Color_Boton: "#8B6F5E",
+};
+
 const EMPRESA_DEFAULT = {
   Nombre_Empresa: "",
   Nombre_Comercial: "",
   Logo_Empresa: "",
-  Color_Principal: "#0D6EFD",
-  Color_Secundario: "#0D1B2A",
-  Color_Boton: "#198754",
+  ...LOGIN_THEME,
 };
 
 export const normalizeUsuario = (usuario = {}) => {

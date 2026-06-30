@@ -26,15 +26,10 @@ import "./Login.css";
 
 import Header from "./Components/paneles/Header";
 import Sidebar from "./Components/paneles/Sidebar";
-import { applyEmpresaTheme } from "./utils/session";
+import { applyEmpresaTheme, LOGIN_THEME } from "./utils/session";
 
 const TODOS = ["Programador", "Gerente", "Vendedor"];
 const ADMIN = ["Programador", "Gerente"];
-const LOGIN_THEME = {
-  Color_Principal: "#594646",
-  Color_Secundario: "#3D3030",
-  Color_Boton: "#8B6F5E",
-};
 
 function AppContent() {
   const [menuOpen, setMenuOpen] = useState(false);

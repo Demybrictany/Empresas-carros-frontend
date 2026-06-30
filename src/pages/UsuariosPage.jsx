@@ -2,14 +2,21 @@ import { useState, useEffect, useCallback } from "react";
 import TablaDesplegable from "../Components/tablas/TablaDesplegable";
 import { apiJson } from "../utils/api";
 import { backendErrorMessage, confirm, error, success, warning } from "../utils/alerts";
+import { getUsuario } from "../utils/session";
 
 function UsuariosPage() {
 
 const [usuarios, setUsuarios] = useState([]);
+const [empresas, setEmpresas] = useState([]);
 const [Nombre, setNombre] = useState("");
 const [Correo, setCorreo] = useState("");
 const [Contrasena, setContrasena] = useState("");
 const [Rol, setRol] = useState("");
+const [Id_Empresa, setIdEmpresa] = useState("");
+const [guardando, setGuardando] = useState(false);
+const [accionUsuarioId, setAccionUsuarioId] = useState(null);
+const usuarioActual = getUsuario();
+const esProgramador = usuarioActual?.Rol === "Programador";
 
 const usuariosMostrados = usuarios.filter((u) => u.Rol !== "Programador");
 
@@ -40,13 +47,26 @@ const cargarUsuarios = useCallback(async () => {
 
 }, []);
 
+const cargarEmpresas = useCallback(async () => {
+  if (!esProgramador) return;
+
+  try {
+    const data = await apiJson("/empresa");
+    setEmpresas(Array.isArray(data) ? data : []);
+  } catch (error) {
+    console.error("Error cargando empresas:", error);
+    setEmpresas([]);
+  }
+}, [esProgramador]);
+
 // ============================
 // USE EFFECT
 // ============================
 
 useEffect(() => {
   cargarUsuarios();
-}, [cargarUsuarios]);
+  cargarEmpresas();
+}, [cargarUsuarios, cargarEmpresas]);
 
 // ============================
 // VALIDACIONES
@@ -59,6 +79,7 @@ const validar = () => {
   if (!Correo.includes("@") || !Correo.includes(".")) return "Correo inválido.";
   if (!Contrasena.trim()) return "Debe ingresar una contraseña.";
   if (!Rol) return "Debe seleccionar un rol.";
+  if (esProgramador && !Id_Empresa) return "Debe seleccionar la empresa del usuario.";
 
   return null;
 
@@ -69,6 +90,7 @@ const validar = () => {
 // ============================
 
 const crearUsuario = async () => {
+  if (guardando) return;
 
   const validationError = validar();
 
@@ -78,6 +100,7 @@ const crearUsuario = async () => {
   }
 
   try {
+    setGuardando(true);
 
     await apiJson("/usuarios", {
       method: "POST",
@@ -85,7 +108,8 @@ const crearUsuario = async () => {
         Nombre,
         Correo,
         Contrasena,
-        Rol
+        Rol,
+        ...(esProgramador ? { Id_Empresa: parseInt(Id_Empresa, 10) } : {})
       })
     });
 
@@ -95,6 +119,7 @@ const crearUsuario = async () => {
     setCorreo("");
     setContrasena("");
     setRol("");
+    setIdEmpresa("");
 
     cargarUsuarios();
 
@@ -103,6 +128,8 @@ const crearUsuario = async () => {
     console.error("Error creando usuario:", err);
     error(backendErrorMessage(err));
 
+  } finally {
+    setGuardando(false);
   }
 
 };
@@ -112,6 +139,7 @@ const crearUsuario = async () => {
 // ============================
 
 const eliminarUsuario = async (id) => {
+  if (accionUsuarioId) return;
 
   const confirmar = await confirm(
     "Eliminar usuario",
@@ -122,6 +150,7 @@ const eliminarUsuario = async (id) => {
   if (!confirmar) return;
 
   try {
+    setAccionUsuarioId(id);
 
     await apiJson(`/usuarios/${id}`, {
       method: "DELETE",
@@ -136,11 +165,15 @@ const eliminarUsuario = async (id) => {
     console.error("Error eliminando usuario:", err);
     error(backendErrorMessage(err));
 
+  } finally {
+    setAccionUsuarioId(null);
   }
 
 };
 
 const cambiarEstadoUsuario = async (id, Estado) => {
+  if (accionUsuarioId) return;
+
   if (Estado !== "Activo") {
     const confirmar = await confirm(
       Estado === "Bloqueado" ? "Bloquear usuario" : "Inactivar usuario",
@@ -152,6 +185,7 @@ const cambiarEstadoUsuario = async (id, Estado) => {
   }
 
   try {
+    setAccionUsuarioId(id);
     await apiJson(`/usuarios/${id}`, {
       method: "PUT",
       body: JSON.stringify({ Estado }),
@@ -161,6 +195,8 @@ const cambiarEstadoUsuario = async (id, Estado) => {
     cargarUsuarios();
   } catch (err) {
     error(backendErrorMessage(err));
+  } finally {
+    setAccionUsuarioId(null);
   }
 };
 
@@ -200,11 +236,26 @@ return (
       <option value="Vendedor">Vendedor</option>
     </select>
 
+    {esProgramador && (
+      <select
+        value={Id_Empresa}
+        onChange={(e) => setIdEmpresa(e.target.value)}
+      >
+        <option value="">Seleccione Empresa</option>
+        {empresas.map((empresa) => (
+          <option key={empresa.Id_Empresa} value={empresa.Id_Empresa}>
+            {empresa.Nombre_Comercial || empresa.Nombre_Empresa}
+          </option>
+        ))}
+      </select>
+    )}
+
     <button
       className="btn-primary"
       onClick={crearUsuario}
+      disabled={guardando}
     >
-      Crear Usuario
+      {guardando ? "Creando..." : "Crear Usuario"}
     </button>
 
   </div>
@@ -248,13 +299,15 @@ return (
                 <button
                   className="btn-primary"
                   onClick={() => cambiarEstadoUsuario(u.Id_Usuario, "Activo")}
+                  disabled={accionUsuarioId === u.Id_Usuario}
                 >
-                  Activar
+                  {accionUsuarioId === u.Id_Usuario ? "Guardando..." : "Activar"}
                 </button>
 
                 <button
                   className="btn-secondary"
                   onClick={() => cambiarEstadoUsuario(u.Id_Usuario, "Inactivo")}
+                  disabled={accionUsuarioId === u.Id_Usuario}
                 >
                   Inactivar
                 </button>
@@ -262,6 +315,7 @@ return (
                 <button
                   className="btn-delete"
                   onClick={() => cambiarEstadoUsuario(u.Id_Usuario, "Bloqueado")}
+                  disabled={accionUsuarioId === u.Id_Usuario}
                 >
                   Bloquear
                 </button>
@@ -269,6 +323,7 @@ return (
                 <button
                   className="btn-eliminar-usuario"
                   onClick={() => eliminarUsuario(u.Id_Usuario)}
+                  disabled={accionUsuarioId === u.Id_Usuario}
                 >
                   Eliminar
                 </button>

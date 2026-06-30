@@ -8,12 +8,12 @@
   --sidebar-visual-width: 240px;
   --header-sidebar-offset: 288px;
   --sidebar-mobile-hidden: -314px;
-  --color-principal: #0D6EFD;
-  --color-principal-rgb: 13, 110, 253;
-  --color-secundario: #0D1B2A;
-  --color-secundario-rgb: 13, 27, 42;
-  --color-boton: #198754;
-  --color-boton-rgb: 25, 135, 84;
+  --color-principal: #594646;
+  --color-principal-rgb: 89, 70, 70;
+  --color-secundario: #3D3030;
+  --color-secundario-rgb: 61, 48, 48;
+  --color-boton: #8B6F5E;
+  --color-boton-rgb: 139, 111, 94;
   --blue-900: var(--color-secundario);
   --blue-800: #0e1a25;
   --blue-700: #102b44;

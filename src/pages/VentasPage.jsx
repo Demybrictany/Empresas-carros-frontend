@@ -18,6 +18,7 @@ function VentasPage() {
   const [DiasContrato, setDiasContrato] = useState("");
   const [colaboradores, setColaboradores] = useState([]);
   const [busqueda, setBusqueda] = useState("");
+  const [guardando, setGuardando] = useState(false);
 
   const cargarVentas = useCallback(async () => {
     try {
@@ -112,6 +113,8 @@ function VentasPage() {
   };
 
   const guardar = async () => {
+    if (guardando) return;
+
     if (!Id_Predio) return warning("Debe seleccionar un carro.");
     if (!Id_Compra) return warning("Debe seleccionar un comprador.");
     if (!Fecha) return warning("Debe ingresar la fecha.");
@@ -150,6 +153,7 @@ function VentasPage() {
     };
 
     try {
+      setGuardando(true);
       await apiJson(Id_Venta ? `/ventas/${Id_Venta}` : "/ventas", {
         method: Id_Venta ? "PUT" : "POST",
         body: JSON.stringify(body),
@@ -161,6 +165,8 @@ function VentasPage() {
       window.dispatchEvent(new Event("ventasActualizadas"));
     } catch (err) {
       error(backendErrorMessage(err));
+    } finally {
+      setGuardando(false);
     }
   };
 
@@ -245,8 +251,8 @@ function VentasPage() {
           + Agregar colaborador
         </button>
 
-        <button className="btn-primary" onClick={guardar}>
-          {Id_Venta ? "Actualizar" : "Registrar Venta"}
+        <button className="btn-primary" onClick={guardar} disabled={guardando}>
+          {guardando ? "Guardando..." : Id_Venta ? "Actualizar" : "Registrar Venta"}
         </button>
       </div>
 

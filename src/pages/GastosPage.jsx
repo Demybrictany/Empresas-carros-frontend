@@ -12,6 +12,7 @@ function GastosPage() {
   const [Monto, setMonto] = useState("");
   const [Fecha, setFecha] = useState("");
   const [Id_Predio, setIdPredio] = useState("");
+  const [guardando, setGuardando] = useState(false);
 
   
   useEffect(() => {
@@ -38,6 +39,8 @@ function GastosPage() {
   };
 
   const guardar = async () => {
+    if (guardando) return;
+
     if (!Descripcion.trim()) return warning("La descripcion es obligatoria.");
     if (!Monto) return warning("El monto es obligatorio.");
     if (!Fecha) return warning("La fecha es obligatoria.");
@@ -54,6 +57,7 @@ function GastosPage() {
       : `/gastos`;
 
     try {
+      setGuardando(true);
       await apiJson(url, {
         method: Id_Gastos ? "PUT" : "POST",
         body: JSON.stringify(body)
@@ -64,6 +68,8 @@ function GastosPage() {
       cargarGastos();
     } catch (err) {
       error(backendErrorMessage(err));
+    } finally {
+      setGuardando(false);
     }
   };
 
@@ -110,8 +116,8 @@ function GastosPage() {
           ))}
         </select>
 
-        <button className="btn-primary" onClick={guardar}>
-          {Id_Gastos ? "Actualizar" : "Agregar"}
+        <button className="btn-primary" onClick={guardar} disabled={guardando}>
+          {guardando ? "Guardando..." : Id_Gastos ? "Actualizar" : "Agregar"}
         </button>
 
       </div>

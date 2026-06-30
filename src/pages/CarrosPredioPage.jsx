@@ -37,6 +37,7 @@ function CarroPredioPage() {
   const [Id_Dueno_Carro, setDuenoCarro] = useState("");
   const [Id_Compra, setCompra] = useState("");
   const [Tiempo_Traspaso, setTraspaso] = useState("");
+  const [guardando, setGuardando] = useState(false);
 
   const cargarCarros = () => {
     apiJson("/carros-predio")
@@ -88,6 +89,8 @@ function CarroPredioPage() {
   };
 
   const guardar = async () => {
+    if (guardando) return;
+
     if (!Placa.trim()) return warning("La placa es obligatoria.");
     if (!Vin.trim()) return warning("VIN es obligatorio.");
     if (!Anio) return warning("El anio es obligatorio.");
@@ -116,6 +119,7 @@ function CarroPredioPage() {
       : `/carros-predio`;
 
     try {
+      setGuardando(true);
       await apiJson(url, {
       method: Id_Predio ? "PUT" : "POST",
       body: JSON.stringify(body),
@@ -123,6 +127,8 @@ function CarroPredioPage() {
     } catch (err) {
       error(backendErrorMessage(err));
       return;
+    } finally {
+      setGuardando(false);
     }
 
     success(Id_Predio ? "Registro actualizado correctamente." : "Registro creado correctamente.");
@@ -299,8 +305,8 @@ function CarroPredioPage() {
             ))}
           </select>
 
-          <button className="btn-primary" onClick={guardar}>
-            {Id_Predio ? "Actualizar" : "Agregar"}
+          <button className="btn-primary" onClick={guardar} disabled={guardando}>
+            {guardando ? "Guardando..." : Id_Predio ? "Actualizar" : "Agregar"}
           </button>
         </div>
 

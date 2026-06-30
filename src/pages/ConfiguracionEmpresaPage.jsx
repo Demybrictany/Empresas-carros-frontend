@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { apiJson } from "../utils/api";
-import { applyEmpresaTheme, getUsuario, saveSession } from "../utils/session";
+import { applyEmpresaTheme, getUsuario, LOGIN_THEME, saveSession } from "../utils/session";
 import { backendErrorMessage, error, success } from "../utils/alerts";
 
 const emptyContrato = {
@@ -16,6 +16,8 @@ function ConfiguracionEmpresaPage() {
   const [empresa, setEmpresa] = useState(usuario?.empresa || {});
   const [contrato, setContrato] = useState(emptyContrato);
   const [contratoId, setContratoId] = useState(null);
+  const [guardandoEmpresa, setGuardandoEmpresa] = useState(false);
+  const [guardandoContrato, setGuardandoContrato] = useState(false);
 
   const cargar = async () => {
     try {
@@ -56,7 +58,10 @@ function ConfiguracionEmpresaPage() {
   };
 
   const guardarEmpresa = async () => {
+    if (guardandoEmpresa) return;
+
     try {
+      setGuardandoEmpresa(true);
       const { Id_Empresa, Fecha_Registro, ...payload } = empresa;
       await apiJson(`/empresa/${usuario.Id_Empresa}`, {
         method: "PUT",
@@ -69,11 +74,16 @@ function ConfiguracionEmpresaPage() {
       success("Empresa actualizada.");
     } catch (err) {
       error(backendErrorMessage(err));
+    } finally {
+      setGuardandoEmpresa(false);
     }
   };
 
   const guardarContrato = async () => {
+    if (guardandoContrato) return;
+
     try {
+      setGuardandoContrato(true);
       await apiJson(contratoId ? `/contrato-configuracion/${contratoId}` : "/contrato-configuracion", {
         method: contratoId ? "PUT" : "POST",
         body: JSON.stringify(contrato),
@@ -82,6 +92,8 @@ function ConfiguracionEmpresaPage() {
       cargar();
     } catch (err) {
       error(backendErrorMessage(err));
+    } finally {
+      setGuardandoContrato(false);
     }
   };
 
@@ -102,18 +114,20 @@ function ConfiguracionEmpresaPage() {
         {empresa.Logo_Empresa && <img src={empresa.Logo_Empresa} alt="Logo empresa" style={{ width: 90, height: 70, objectFit: "contain" }} />}
 
         <label>Color_Principal</label>
-        <input type="color" name="Color_Principal" value={empresa.Color_Principal || "#0D6EFD"} onChange={handleEmpresa} />
+        <input type="color" name="Color_Principal" value={empresa.Color_Principal || LOGIN_THEME.Color_Principal} onChange={handleEmpresa} />
         <label>Color_Secundario</label>
-        <input type="color" name="Color_Secundario" value={empresa.Color_Secundario || "#0D1B2A"} onChange={handleEmpresa} />
+        <input type="color" name="Color_Secundario" value={empresa.Color_Secundario || LOGIN_THEME.Color_Secundario} onChange={handleEmpresa} />
         <label>Color_Boton</label>
-        <input type="color" name="Color_Boton" value={empresa.Color_Boton || "#198754"} onChange={handleEmpresa} />
+        <input type="color" name="Color_Boton" value={empresa.Color_Boton || LOGIN_THEME.Color_Boton} onChange={handleEmpresa} />
 
         <input name="Nombre_Gerente" placeholder="Nombre_Gerente" value={empresa.Nombre_Gerente || ""} onChange={handleEmpresa} />
         <input name="DPI_Gerente" placeholder="DPI_Gerente" value={empresa.DPI_Gerente || ""} onChange={handleEmpresa} />
         <input name="Telefono_Gerente" placeholder="Telefono_Gerente" value={empresa.Telefono_Gerente || ""} onChange={handleEmpresa} />
         <textarea name="Texto_Contrato" placeholder="Texto_Contrato" value={empresa.Texto_Contrato || ""} onChange={handleEmpresa} />
 
-        <button className="btn-primary" onClick={guardarEmpresa}>Guardar empresa</button>
+        <button className="btn-primary" onClick={guardarEmpresa} disabled={guardandoEmpresa}>
+          {guardandoEmpresa ? "Guardando..." : "Guardar empresa"}
+        </button>
       </div>
 
       <div className="form-box">
@@ -123,7 +137,9 @@ function ConfiguracionEmpresaPage() {
         <textarea name="Clausula_Estado_Vehiculo" placeholder="Clausula_Estado_Vehiculo" value={contrato.Clausula_Estado_Vehiculo || ""} onChange={handleContrato} />
         <textarea name="Clausula_Devolucion" placeholder="Clausula_Devolucion" value={contrato.Clausula_Devolucion || ""} onChange={handleContrato} />
         <textarea name="Texto_Final" placeholder="Texto_Final" value={contrato.Texto_Final || ""} onChange={handleContrato} />
-        <button className="btn-primary" onClick={guardarContrato}>Guardar contrato</button>
+        <button className="btn-primary" onClick={guardarContrato} disabled={guardandoContrato}>
+          {guardandoContrato ? "Guardando..." : "Guardar contrato"}
+        </button>
       </div>
     </div>
   );
