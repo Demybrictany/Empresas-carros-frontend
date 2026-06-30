@@ -17,6 +17,7 @@ import BuscadorPage from "./pages/BuscadorPage";
 import ComisionesPage from "./pages/ComisionesPage";
 import EmpresasPage from "./pages/EmpresasPage";
 import ConfiguracionEmpresaPage from "./pages/ConfiguracionEmpresaPage";
+import CambiarContrasenaPage from "./pages/CambiarContrasenaPage";
 
 import ProtectedRoute from "./Protected";
 import Unauthorized from "./pages/Unauthorized";
@@ -99,6 +100,15 @@ function AppContent() {
               element={
                 <ProtectedRoute roles={ADMIN}>
                   <CrearUsuarioPage />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/cambiar-contrasena"
+              element={
+                <ProtectedRoute roles={TODOS}>
+                  <CambiarContrasenaPage />
                 </ProtectedRoute>
               }
             />

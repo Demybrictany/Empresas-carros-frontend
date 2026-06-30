@@ -80,11 +80,13 @@ function EmpresasPage() {
     const lista = Array.isArray(data) ? data : [];
     setEmpresas(lista);
 
-    const encontrada = lista.find(
+    const encontradas = lista.filter(
       (empresa) =>
         empresa.Nombre_Empresa === nombreEmpresa ||
         empresa.Nombre_Comercial === form.Nombre_Comercial
     );
+
+    const encontrada = encontradas.sort((a, b) => (b.Id_Empresa || 0) - (a.Id_Empresa || 0))[0];
 
     return encontrada?.Id_Empresa || null;
   };

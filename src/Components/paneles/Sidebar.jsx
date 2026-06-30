@@ -103,6 +103,13 @@ const icons = {
       <path d="M15 12H4" />
     </svg>
   ),
+  lock: (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M7 10V8a5 5 0 0 1 10 0v2" />
+      <path d="M5 10h14v10H5z" />
+      <path d="M12 14v3" />
+    </svg>
+  ),
 };
 
 const sections = [
@@ -135,8 +142,7 @@ const sections = [
       { label: "Colaboradores", to: "/colaboradores", icon: "people", roles: ["gerente", "programador"] },
       { label: "Usuarios", to: "/usuarios", icon: "people", roles: ["gerente", "programador"] },
       { label: "Crear Usuario", to: "/crear-usuario", icon: "addUser", roles: ["gerente", "programador"] },
-      { label: "Empresas", to: "/empresas", icon: "dashboard", roles: ["programador"] },
-      { label: "Config.\nEmpresa", to: "/configuracion-empresa", icon: "dashboard", roles: ["gerente", "programador"] },
+      { label: "Config.\nEmpresa", to: "/configuracion-empresa", icon: "dashboard", roles: ["gerente"] },
     ],
   },
   {
@@ -196,6 +202,7 @@ function Sidebar({ menuOpen, toggleMenu }) {
   };
 
   const nombreEmpresa = empresa.Nombre_Comercial || empresa.Nombre_Empresa || "Multiempresa";
+  const esProgramador = usuario?.Rol === "Programador";
 
   return (
     <div className={`sidebar ${menuOpen ? "open" : ""}`}>
@@ -211,6 +218,17 @@ function Sidebar({ menuOpen, toggleMenu }) {
           )}
           <strong>{nombreEmpresa}</strong>
           <small>{usuario.Nombre} · {usuario.Rol}</small>
+        </div>
+      )}
+
+      {esProgramador && (
+        <div className="sidebar-programmer-tabs">
+          <NavLink to="/configuracion-empresa" onClick={closeOnMobile}>
+            Gestionar mi empresa
+          </NavLink>
+          <NavLink to="/empresas" onClick={closeOnMobile}>
+            Crear empresas
+          </NavLink>
         </div>
       )}
 
@@ -249,6 +267,10 @@ function Sidebar({ menuOpen, toggleMenu }) {
         {usuario && (
           <li className="sidebar-section">
             <span className="sidebar-section-title">Sistema</span>
+            <NavLink to="/cambiar-contrasena" onClick={closeOnMobile}>
+              <span className="sidebar-icon">{icons.lock}</span>
+              <span>Cambiar Contrasena</span>
+            </NavLink>
             <button className="sidebar-logout" onClick={logout}>
               <span className="sidebar-icon">{icons.logout}</span>
               <span>Cerrar Sesion</span>
