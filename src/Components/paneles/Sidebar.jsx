@@ -120,6 +120,14 @@ const sections = [
     ],
   },
   {
+    title: "Programador",
+    items: [
+      { label: "Mi\nEmpresa", to: "/configuracion-empresa", icon: "dashboard", roles: ["programador"] },
+      { label: "Crear\nEmpresa", to: "/crear-empresa", icon: "addUser", roles: ["programador"] },
+      { label: "Administrar\nEmpresas", to: "/administrar-empresas", icon: "dashboard", roles: ["programador"] },
+    ],
+  },
+  {
     title: "Inventario",
     items: [
       { label: "Carros en\nPredio", to: "/carros-predio", icon: "car", roles: ["gerente", "colaborador", "programador"] },
@@ -202,7 +210,6 @@ function Sidebar({ menuOpen, toggleMenu }) {
   };
 
   const nombreEmpresa = empresa.Nombre_Comercial || empresa.Nombre_Empresa || "Multiempresa";
-  const esProgramador = usuario?.Rol === "Programador";
 
   return (
     <div className={`sidebar ${menuOpen ? "open" : ""}`}>
@@ -218,17 +225,6 @@ function Sidebar({ menuOpen, toggleMenu }) {
           )}
           <strong>{nombreEmpresa}</strong>
           <small>{usuario.Nombre} · {usuario.Rol}</small>
-        </div>
-      )}
-
-      {esProgramador && (
-        <div className="sidebar-programmer-tabs">
-          <NavLink to="/configuracion-empresa" onClick={closeOnMobile}>
-            Gestionar mi empresa
-          </NavLink>
-          <NavLink to="/empresas" onClick={closeOnMobile}>
-            Crear empresas
-          </NavLink>
         </div>
       )}
 

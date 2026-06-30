@@ -25,13 +25,15 @@ const emptyUsuarioEmpresa = {
   Rol: "Gerente",
 };
 
-function EmpresasPage() {
+function EmpresasPage({ vista = "crear" }) {
   const [empresas, setEmpresas] = useState([]);
   const [form, setForm] = useState(emptyEmpresa);
   const [usuarioEmpresa, setUsuarioEmpresa] = useState(emptyUsuarioEmpresa);
   const [editId, setEditId] = useState(null);
   const [guardando, setGuardando] = useState(false);
   const [estadoEmpresaId, setEstadoEmpresaId] = useState(null);
+  const esCrear = vista === "crear";
+  const esAdministrar = vista === "administrar";
 
   const cargarEmpresas = async () => {
     try {
@@ -94,12 +96,17 @@ function EmpresasPage() {
   const guardar = async () => {
     if (guardando) return;
 
+    if (esAdministrar && !editId) {
+      warning("Seleccione una empresa para editar.");
+      return;
+    }
+
     if (!form.Nombre_Empresa.trim()) {
       warning("El nombre de la empresa es obligatorio.");
       return;
     }
 
-    if (!editId) {
+    if (esCrear) {
       if (!usuarioEmpresa.Nombre.trim()) {
         warning("Ingrese el nombre del usuario de la empresa.");
         return;
@@ -128,7 +135,7 @@ function EmpresasPage() {
         body: JSON.stringify(form),
       });
 
-      if (!editId) {
+      if (esCrear) {
         const idEmpresa = await empresaCreadaId(respuestaEmpresa, form.Nombre_Empresa);
 
         if (!idEmpresa) {
@@ -145,7 +152,7 @@ function EmpresasPage() {
       }
 
       limpiar();
-      success(editId ? "Empresa actualizada." : "Empresa y usuario creados correctamente.");
+      success(esCrear ? "Empresa y usuario creados correctamente." : "Empresa actualizada.");
       await cargarEmpresas();
     } catch (err) {
       error(backendErrorMessage(err));
@@ -184,97 +191,101 @@ function EmpresasPage() {
 
   return (
     <div className="page-container">
-      <h1>Gestion de Empresas</h1>
+      <h1>{esCrear ? "Crear Empresa" : "Administrar Empresas"}</h1>
 
-      <div className="form-box">
-        <h3>{editId ? "Editar Empresa" : "Nueva Empresa"}</h3>
+      {(esCrear || editId) && (
+        <div className="form-box">
+          <h3>{esCrear ? "Nueva Empresa" : "Editar Empresa"}</h3>
 
-        <input name="Nombre_Empresa" placeholder="Nombre_Empresa" value={form.Nombre_Empresa} onChange={handleChange} />
-        <input name="Nombre_Comercial" placeholder="Nombre_Comercial" value={form.Nombre_Comercial || ""} onChange={handleChange} />
-        <input name="Telefono" placeholder="Telefono" value={form.Telefono || ""} onChange={handleChange} />
-        <input name="Correo" placeholder="Correo" value={form.Correo || ""} onChange={handleChange} />
-        <input name="Direccion" placeholder="Direccion" value={form.Direccion || ""} onChange={handleChange} />
+          <input name="Nombre_Empresa" placeholder="Nombre_Empresa" value={form.Nombre_Empresa} onChange={handleChange} />
+          <input name="Nombre_Comercial" placeholder="Nombre_Comercial" value={form.Nombre_Comercial || ""} onChange={handleChange} />
+          <input name="Telefono" placeholder="Telefono" value={form.Telefono || ""} onChange={handleChange} />
+          <input name="Correo" placeholder="Correo" value={form.Correo || ""} onChange={handleChange} />
+          <input name="Direccion" placeholder="Direccion" value={form.Direccion || ""} onChange={handleChange} />
 
-        <label>Logo_Empresa</label>
-        <input type="file" accept="image/*" onChange={cargarLogo} />
-        {form.Logo_Empresa && <img src={form.Logo_Empresa} alt="Logo empresa" style={{ width: 90, height: 70, objectFit: "contain" }} />}
+          <label>Logo_Empresa</label>
+          <input type="file" accept="image/*" onChange={cargarLogo} />
+          {form.Logo_Empresa && <img src={form.Logo_Empresa} alt="Logo empresa" style={{ width: 90, height: 70, objectFit: "contain" }} />}
 
-        <label>Color_Principal</label>
-        <input type="color" name="Color_Principal" value={form.Color_Principal || LOGIN_THEME.Color_Principal} onChange={handleChange} />
-        <label>Color_Secundario</label>
-        <input type="color" name="Color_Secundario" value={form.Color_Secundario || LOGIN_THEME.Color_Secundario} onChange={handleChange} />
-        <label>Color_Boton</label>
-        <input type="color" name="Color_Boton" value={form.Color_Boton || LOGIN_THEME.Color_Boton} onChange={handleChange} />
+          <label>Color_Principal</label>
+          <input type="color" name="Color_Principal" value={form.Color_Principal || LOGIN_THEME.Color_Principal} onChange={handleChange} />
+          <label>Color_Secundario</label>
+          <input type="color" name="Color_Secundario" value={form.Color_Secundario || LOGIN_THEME.Color_Secundario} onChange={handleChange} />
+          <label>Color_Boton</label>
+          <input type="color" name="Color_Boton" value={form.Color_Boton || LOGIN_THEME.Color_Boton} onChange={handleChange} />
 
-        <input name="Nombre_Gerente" placeholder="Nombre_Gerente" value={form.Nombre_Gerente || ""} onChange={handleChange} />
-        <input name="DPI_Gerente" placeholder="DPI_Gerente" value={form.DPI_Gerente || ""} onChange={handleChange} />
-        <input name="Telefono_Gerente" placeholder="Telefono_Gerente" value={form.Telefono_Gerente || ""} onChange={handleChange} />
-        <textarea name="Texto_Contrato" placeholder="Texto_Contrato" value={form.Texto_Contrato || ""} onChange={handleChange} />
+          <input name="Nombre_Gerente" placeholder="Nombre_Gerente" value={form.Nombre_Gerente || ""} onChange={handleChange} />
+          <input name="DPI_Gerente" placeholder="DPI_Gerente" value={form.DPI_Gerente || ""} onChange={handleChange} />
+          <input name="Telefono_Gerente" placeholder="Telefono_Gerente" value={form.Telefono_Gerente || ""} onChange={handleChange} />
+          <textarea name="Texto_Contrato" placeholder="Texto_Contrato" value={form.Texto_Contrato || ""} onChange={handleChange} />
 
-        {!editId && (
-          <>
-            <h3>Usuario de la empresa</h3>
-            <input
-              placeholder="Nombre del usuario"
-              value={usuarioEmpresa.Nombre}
-              onChange={(e) => setUsuarioEmpresa({ ...usuarioEmpresa, Nombre: e.target.value })}
-            />
-            <input
-              placeholder="Correo del usuario"
-              value={usuarioEmpresa.Correo}
-              onChange={(e) => setUsuarioEmpresa({ ...usuarioEmpresa, Correo: e.target.value })}
-            />
-            <input
-              type="password"
-              placeholder="Contrasena del usuario"
-              value={usuarioEmpresa.Contrasena}
-              onChange={(e) => setUsuarioEmpresa({ ...usuarioEmpresa, Contrasena: e.target.value })}
-            />
-            <select
-              value={usuarioEmpresa.Rol}
-              onChange={(e) => setUsuarioEmpresa({ ...usuarioEmpresa, Rol: e.target.value })}
-            >
-              <option value="Gerente">Gerente</option>
-              <option value="Vendedor">Vendedor</option>
-            </select>
-          </>
-        )}
+          {esCrear && (
+            <>
+              <h3>Usuario de la empresa</h3>
+              <input
+                placeholder="Nombre del usuario"
+                value={usuarioEmpresa.Nombre}
+                onChange={(e) => setUsuarioEmpresa({ ...usuarioEmpresa, Nombre: e.target.value })}
+              />
+              <input
+                placeholder="Correo del usuario"
+                value={usuarioEmpresa.Correo}
+                onChange={(e) => setUsuarioEmpresa({ ...usuarioEmpresa, Correo: e.target.value })}
+              />
+              <input
+                type="password"
+                placeholder="Contrasena del usuario"
+                value={usuarioEmpresa.Contrasena}
+                onChange={(e) => setUsuarioEmpresa({ ...usuarioEmpresa, Contrasena: e.target.value })}
+              />
+              <select
+                value={usuarioEmpresa.Rol}
+                onChange={(e) => setUsuarioEmpresa({ ...usuarioEmpresa, Rol: e.target.value })}
+              >
+                <option value="Gerente">Gerente</option>
+                <option value="Vendedor">Vendedor</option>
+              </select>
+            </>
+          )}
 
-        <button className="btn-primary" onClick={guardar} disabled={guardando}>
-          {guardando ? "Guardando..." : editId ? "Actualizar" : "Crear empresa y usuario"}
-        </button>
-        {editId && <button className="btn-secondary" onClick={limpiar} disabled={guardando}>Cancelar</button>}
-      </div>
+          <button className="btn-primary" onClick={guardar} disabled={guardando}>
+            {guardando ? "Guardando..." : esCrear ? "Crear empresa y usuario" : "Actualizar"}
+          </button>
+          {esAdministrar && <button className="btn-secondary" onClick={limpiar} disabled={guardando}>Cancelar</button>}
+        </div>
+      )}
 
-      <div className="table-container">
-        <table className="table-modern">
-          <thead>
-            <tr>
-              <th>Empresa</th>
-              <th>Comercial</th>
-              <th>Estado</th>
-              <th>Acciones</th>
-            </tr>
-          </thead>
-          <tbody>
-            {empresas.map((empresa) => (
-              <tr key={empresa.Id_Empresa}>
-                <td>{empresa.Nombre_Empresa}</td>
-                <td>{empresa.Nombre_Comercial}</td>
-                <td>{empresa.Estado}</td>
-                <td>
-                  <button className="btn-edit" onClick={() => seleccionar(empresa)} disabled={estadoEmpresaId === empresa.Id_Empresa}>Editar</button>
-                  <button className="btn-primary" onClick={() => cambiarEstado(empresa, "Activa")} disabled={estadoEmpresaId === empresa.Id_Empresa}>
-                    {estadoEmpresaId === empresa.Id_Empresa ? "Guardando..." : "Activar"}
-                  </button>
-                  <button className="btn-secondary" onClick={() => cambiarEstado(empresa, "Suspendida")} disabled={estadoEmpresaId === empresa.Id_Empresa}>Suspender</button>
-                  <button className="btn-delete" onClick={() => cambiarEstado(empresa, "Eliminada")} disabled={estadoEmpresaId === empresa.Id_Empresa}>Eliminar</button>
-                </td>
+      {esAdministrar && (
+        <div className="table-container">
+          <table className="table-modern">
+            <thead>
+              <tr>
+                <th>Empresa</th>
+                <th>Comercial</th>
+                <th>Estado</th>
+                <th>Acciones</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+            </thead>
+            <tbody>
+              {empresas.map((empresa) => (
+                <tr key={empresa.Id_Empresa}>
+                  <td>{empresa.Nombre_Empresa}</td>
+                  <td>{empresa.Nombre_Comercial}</td>
+                  <td>{empresa.Estado}</td>
+                  <td>
+                    <button className="btn-edit" onClick={() => seleccionar(empresa)} disabled={estadoEmpresaId === empresa.Id_Empresa}>Editar</button>
+                    <button className="btn-primary" onClick={() => cambiarEstado(empresa, "Activa")} disabled={estadoEmpresaId === empresa.Id_Empresa}>
+                      {estadoEmpresaId === empresa.Id_Empresa ? "Guardando..." : "Activar"}
+                    </button>
+                    <button className="btn-secondary" onClick={() => cambiarEstado(empresa, "Suspendida")} disabled={estadoEmpresaId === empresa.Id_Empresa}>Suspender</button>
+                    <button className="btn-delete" onClick={() => cambiarEstado(empresa, "Eliminada")} disabled={estadoEmpresaId === empresa.Id_Empresa}>Eliminar</button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
 }
