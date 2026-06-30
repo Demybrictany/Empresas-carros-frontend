@@ -1,37 +1,24 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import TablaColaboradores from "../Components/tablas/TablaColaboradores";
-import { BASE_URL } from "../config";
+import { apiJson } from "../utils/api";
+import { backendErrorMessage, error, success, warning } from "../utils/alerts";
 
 function ColaboradoresPage() {
-
   const [colaboradores, setColaboradores] = useState([]);
-
   const [Id_Colaborador, setIdColaborador] = useState(null);
-
   const [Nombre, setNombre] = useState("");
   const [Apellido, setApellido] = useState("");
   const [DPI, setDPI] = useState("");
-
   const [busqueda, setBusqueda] = useState("");
-
-  // -----------------------------
-  // VALIDACIÓN DPI
-  // -----------------------------
 
   const validarDPI = (dpi) => /^\d{13}$/.test(dpi);
 
-  // -----------------------------
-  // CARGAR DATOS
-  // -----------------------------
-
   const cargarColaboradores = async () => {
     try {
-      const res = await fetch(`${BASE_URL}/colaboradores`);
-      const data = await res.json();
-
+      const data = await apiJson("/colaboradores");
       setColaboradores(Array.isArray(data) ? data : []);
-    } catch (error) {
-      console.error("Error cargando colaboradores:", error);
+    } catch (err) {
+      console.error("Error cargando colaboradores:", err);
       setColaboradores([]);
     }
   };
@@ -40,20 +27,12 @@ function ColaboradoresPage() {
     cargarColaboradores();
   }, []);
 
-  // -----------------------------
-  // SELECCIONAR PARA EDITAR
-  // -----------------------------
-
   const seleccionar = (c) => {
     setIdColaborador(c.Id_Colaborador);
     setNombre(c.Nombre || "");
     setApellido(c.Apellido || "");
     setDPI(c.DPI || "");
   };
-
-  // -----------------------------
-  // LIMPIAR FORMULARIO
-  // -----------------------------
 
   const limpiar = () => {
     setIdColaborador(null);
@@ -62,132 +41,78 @@ function ColaboradoresPage() {
     setDPI("");
   };
 
-  // -----------------------------
-  // AGREGAR
-  // -----------------------------
-
-  const agregar = async () => {
-    if (!Nombre.trim() || !Apellido.trim())
-      return alert("Nombre y apellido son obligatorios.");
-
-    if (!validarDPI(DPI))
-      return alert("El DPI debe tener exactamente 13 dígitos.");
-
-    await fetch(`${BASE_URL}/colaboradores`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        Nombre,
-        Apellido,
-        DPI
-      })
-    });
-
-    limpiar();
-    cargarColaboradores();
+  const validarFormulario = () => {
+    if (!Nombre.trim() || !Apellido.trim()) return "Nombre y apellido son obligatorios.";
+    if (!validarDPI(DPI)) return "El DPI debe tener exactamente 13 digitos.";
+    return null;
   };
 
-  // -----------------------------
-  // ACTUALIZAR
-  // -----------------------------
+  const guardar = async () => {
+    const validationError = validarFormulario();
+    if (validationError) return warning(validationError);
 
-  const actualizar = async () => {
-    if (!Nombre.trim() || !Apellido.trim())
-      return alert("Nombre y apellido son obligatorios.");
+    try {
+      await apiJson(Id_Colaborador ? `/colaboradores/${Id_Colaborador}` : "/colaboradores", {
+        method: Id_Colaborador ? "PUT" : "POST",
+        body: JSON.stringify({ Nombre, Apellido, DPI }),
+      });
 
-    if (!validarDPI(DPI))
-      return alert("El DPI debe tener exactamente 13 dígitos.");
-
-    await fetch(`${BASE_URL}/colaboradores/${Id_Colaborador}`, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        Nombre,
-        Apellido,
-        DPI
-      })
-    });
-
-    limpiar();
-    cargarColaboradores();
+      success(Id_Colaborador ? "Registro actualizado correctamente." : "Registro creado correctamente.");
+      limpiar();
+      cargarColaboradores();
+    } catch (err) {
+      error(backendErrorMessage(err));
+    }
   };
-
-  // -----------------------------
-  // FILTRO BUSQUEDA
-  // -----------------------------
 
   const colaboradoresFiltrados = colaboradores.filter((c) => {
     const texto = busqueda.toLowerCase();
-
     return (
-      (c.Nombre ? c.Nombre.toLowerCase().includes(texto) : false) ||
-      (c.Apellido ? c.Apellido.toLowerCase().includes(texto) : false) ||
-      (c.DPI ? String(c.DPI).toLowerCase().includes(texto) : false)
+      (c.Nombre || "").toLowerCase().includes(texto) ||
+      (c.Apellido || "").toLowerCase().includes(texto) ||
+      String(c.DPI || "").toLowerCase().includes(texto)
     );
   });
 
-  // -----------------------------
-  // RENDER
-  // -----------------------------
-
   return (
     <div className="page-container">
-      <h1>Gestión de Colaboradores</h1>
+      <h1>Gestion de Colaboradores</h1>
 
       <div className="form-box">
-
         <h3>{Id_Colaborador ? "Editar Colaborador" : "Nuevo Colaborador"}</h3>
 
+        <input placeholder="Nombre" value={Nombre} onChange={(e) => setNombre(e.target.value)} />
+        <input placeholder="Apellido" value={Apellido} onChange={(e) => setApellido(e.target.value)} />
         <input
-          placeholder="Nombre"
-          value={Nombre}
-          onChange={(e) => setNombre(e.target.value)}
-        />
-
-        <input
-          placeholder="Apellido"
-          value={Apellido}
-          onChange={(e) => setApellido(e.target.value)}
-        />
-
-        <input
-          placeholder="DPI (13 dígitos)"
+          placeholder="DPI (13 digitos)"
           value={DPI}
           maxLength={13}
           onChange={(e) => {
-            const v = e.target.value;
-            if (/^\d*$/.test(v)) setDPI(v);
+            if (/^\d*$/.test(e.target.value)) setDPI(e.target.value);
           }}
         />
 
         {Id_Colaborador ? (
           <>
-            <button className="btn-primary" onClick={actualizar}>
+            <button className="btn-primary" onClick={guardar}>
               Actualizar
             </button>
-
             <button className="btn-secondary" onClick={limpiar}>
               Cancelar
             </button>
           </>
         ) : (
-          <button className="btn-primary" onClick={agregar}>
+          <button className="btn-primary" onClick={guardar}>
             Agregar
           </button>
         )}
       </div>
 
-      {/* BUSCADOR */}
-
       <div className="search-row">
         <input
           className="search-input-inside"
           type="text"
-          placeholder="Buscar Colaborador..."
+          placeholder="Buscar colaborador..."
           value={busqueda}
           onChange={(e) => setBusqueda(e.target.value)}
         />

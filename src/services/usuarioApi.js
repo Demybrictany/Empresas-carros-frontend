@@ -1,4 +1,5 @@
 import { BASE_URL } from "../config";
+import { apiJson } from "../utils/api";
 
 const API = `${BASE_URL}/usuarios`;
 
@@ -16,15 +17,9 @@ export async function login(usuario, contrasena) {
 }
 
 // registrar usuario
-export async function registrarUsuario(data, token) {
-  const res = await fetch(API, {
+export async function registrarUsuario(data) {
+  return apiJson("/usuarios", {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
     body: JSON.stringify(data),
   });
-
-  return res.json();
 }

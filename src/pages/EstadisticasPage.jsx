@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { BASE_URL } from "../config";
+import { apiJson } from "../utils/api";
+import { getUsuario } from "../utils/session";
+import { warning } from "../utils/alerts";
 
 const initialResumen = {
   vendido: 0,
@@ -191,6 +193,11 @@ const calcularResumen = ({ ventas, gastos, carrosById, filtroVenta, filtroGasto 
   };
 };
 
+const filtrarPorEmpresaSesion = (items, idEmpresa) => {
+  if (!idEmpresa) return items;
+  return items.filter((item) => item.Id_Empresa === undefined || String(item.Id_Empresa) === String(idEmpresa));
+};
+
 function EstadisticasPage() {
   const navigate = useNavigate();
   const [resumenHoy, setResumenHoy] = useState(initialResumen);
@@ -207,21 +214,16 @@ function EstadisticasPage() {
   useEffect(() => {
     const cargarEstadisticas = async () => {
       try {
-        const [ventasRes, gastosRes, carrosRes] = await Promise.all([
-          fetch(`${BASE_URL}/ventas`),
-          fetch(`${BASE_URL}/gastos`),
-          fetch(`${BASE_URL}/carros-predio`),
-        ]);
-
         const [ventasData, gastosData, carrosData] = await Promise.all([
-          ventasRes.json(),
-          gastosRes.json(),
-          carrosRes.json(),
+          apiJson("/ventas"),
+          apiJson("/gastos"),
+          apiJson("/carros-predio"),
         ]);
 
-        const ventas = Array.isArray(ventasData) ? ventasData : [];
-        const gastos = Array.isArray(gastosData) ? gastosData : [];
-        const carros = Array.isArray(carrosData) ? carrosData : [];
+        const idEmpresa = getUsuario()?.Id_Empresa;
+        const ventas = filtrarPorEmpresaSesion(Array.isArray(ventasData) ? ventasData : [], idEmpresa);
+        const gastos = filtrarPorEmpresaSesion(Array.isArray(gastosData) ? gastosData : [], idEmpresa);
+        const carros = filtrarPorEmpresaSesion(Array.isArray(carrosData) ? carrosData : [], idEmpresa);
         const carrosById = new Map(carros.map((carro) => [carro.Id_Predio, carro]));
         const hoy = new Date();
 
@@ -341,8 +343,8 @@ function EstadisticasPage() {
   }, [ventasReporte, gastosReporte, carrosReporte, mesReporte]);
 
   const descargarReporteMensual = () => {
-    if (!mesReporte) return alert("Seleccione un mes para generar el reporte.");
-    if (ventasMesReporte.length === 0) return alert("No hay carros vendidos en el mes seleccionado.");
+    if (!mesReporte) return warning("Seleccione un mes para generar el reporte.");
+    if (ventasMesReporte.length === 0) return warning("No hay carros vendidos en el mes seleccionado.");
 
     const pdf = crearPdfReporteMensual({
       mes: mesReporte,

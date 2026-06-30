@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import TablaGastos from "../Components/tablas/TablaGastos";
-import { BASE_URL } from "../config";
+import { apiJson } from "../utils/api";
+import { backendErrorMessage, error, success, warning } from "../utils/alerts";
 
 function GastosPage() {
   const [gastos, setGastos] = useState([]);
@@ -19,14 +20,12 @@ function GastosPage() {
   }, []);
 
   const cargarGastos = () => {
-    fetch(`${BASE_URL}/gastos`)
-      .then((res) => res.json())
+    apiJson("/gastos")
       .then((data) => setGastos(data));
   };
 
   const cargarCarros = () => {
-    fetch(`${BASE_URL}/carros-predio`)
-      .then((res) => res.json())
+    apiJson("/carros-predio")
       .then((data) => setCarros(data));
   };
 
@@ -39,9 +38,9 @@ function GastosPage() {
   };
 
   const guardar = async () => {
-    if (!Descripcion.trim()) return alert("La descripción es obligatoria");
-    if (!Monto) return alert("El monto es obligatorio");
-    if (!Fecha) return alert("La fecha es obligatoria");
+    if (!Descripcion.trim()) return warning("La descripcion es obligatoria.");
+    if (!Monto) return warning("El monto es obligatorio.");
+    if (!Fecha) return warning("La fecha es obligatoria.");
 
     const body = {
       Descripcion,
@@ -51,17 +50,21 @@ function GastosPage() {
     };
 
     const url = Id_Gastos
-      ? `${BASE_URL}/gastos/${Id_Gastos}`
-      : `${BASE_URL}/gastos`;
+      ? `/gastos/${Id_Gastos}`
+      : `/gastos`;
 
-    await fetch(url, {
-      method: Id_Gastos ? "PUT" : "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body)
-    });
+    try {
+      await apiJson(url, {
+        method: Id_Gastos ? "PUT" : "POST",
+        body: JSON.stringify(body)
+      });
 
-    limpiar();
-    cargarGastos();
+      success(Id_Gastos ? "Registro actualizado correctamente." : "Registro creado correctamente.");
+      limpiar();
+      cargarGastos();
+    } catch (err) {
+      error(backendErrorMessage(err));
+    }
   };
 
   const seleccionar = (g) => {

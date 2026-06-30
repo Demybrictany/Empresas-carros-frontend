@@ -1,18 +1,23 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { BASE_URL } from "../config";
+import { applyEmpresaTheme, saveSession } from "../utils/session";
+import { error, success, warning } from "../utils/alerts";
 
 function LoginPage() {
   const navigate = useNavigate();
 
-  const [usuario, setUsuario] = useState("");
-  const [contrasena, setContrasena] = useState("");
+  const [Correo, setCorreo] = useState("");
+  const [Contrasena, setContrasena] = useState("");
 
   const API = `${BASE_URL}/usuarios/login`;
 
   const iniciarSesion = async () => {
-    if (!usuario || !contrasena) {
-      return alert("Ingrese usuario o correo y contraseña");
+    const correo = Correo.trim();
+
+    if (!correo || !Contrasena) {
+      warning("Ingrese correo electronico y contrasena para continuar.");
+      return;
     }
 
     try {
@@ -20,57 +25,59 @@ function LoginPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          usuario: usuario,
-          contrasena: contrasena,
+          Correo: correo,
+          Contrasena,
+          usuario: correo,
+          contrasena: Contrasena,
         }),
       });
 
       const data = await res.json();
 
       if (!res.ok) {
-        return alert(data.error || "Error al iniciar sesión");
+        error(data.error || "Revise sus credenciales e intente nuevamente.");
+        return;
       }
 
-      // Guarda todo en el localStorage
-      localStorage.setItem("usuario", JSON.stringify(data.usuario));
-      localStorage.setItem("token", data.token);
-      // Actualizar Sidebar sin recargar
-      window.dispatchEvent(new Event("usuarioActualizado"));
+      const usuarioSesion = saveSession({
+        token: data.token,
+        usuario: data.usuario,
+      });
 
-      alert("Inicio de sesión correcto ✔");
+      applyEmpresaTheme(usuarioSesion.empresa);
 
-      const rol = data.usuario.rol.toLowerCase();
+      await success(`Bienvenido, ${usuarioSesion.Nombre || usuarioSesion.Correo}.`, { timer: 1000 });
 
-      if (rol === "gerente" || rol === "programador") {
-        navigate("/");
-      } else if (rol === "colaborador") {
+      if (usuarioSesion.Rol === "Vendedor") {
         navigate("/carros-predio");
-      } else {
-        navigate("/");
+        return;
       }
 
-    } catch (error) {
-      console.error("ERROR LOGIN:", error);
-      alert("No se pudo conectar con el servidor");
+      navigate("/");
+    } catch (err) {
+      console.error("ERROR LOGIN:", err);
+      error("No se pudo conectar con el servidor. Verifique que el backend este activo.");
     }
   };
 
   return (
     <div className="login-container">
       <div className="login-box">
-        <h2>Iniciar Sesión</h2>
+        <h2>Iniciar Sesion</h2>
 
         <input
-          type="text"
-          placeholder="Correo o Nombre"
-          value={usuario}
-          onChange={(e) => setUsuario(e.target.value)}
+          type="email"
+          placeholder="Correo electronico"
+          value={Correo}
+          autoComplete="off"
+          onChange={(e) => setCorreo(e.target.value)}
         />
 
         <input
           type="password"
-          placeholder="Contraseña"
-          value={contrasena}
+          placeholder="Contrasena"
+          value={Contrasena}
+          autoComplete="new-password"
           onChange={(e) => setContrasena(e.target.value)}
         />
 

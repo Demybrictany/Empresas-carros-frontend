@@ -1,9 +1,17 @@
 import axios from "axios";
 import { BASE_URL } from "../config";
+import { getToken } from "../utils/session";
 
-// instancia central de axios
 const api = axios.create({
   baseURL: BASE_URL,
+});
+
+api.interceptors.request.use((config) => {
+  const token = getToken();
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
 });
 
 // ===============================
@@ -18,27 +26,13 @@ export const getVendedores = async () => {
 
 // Crear vendedor
 export const createVendedor = async (data) => {
-  const formData = new FormData();
-
-  Object.keys(data).forEach((key) => {
-    formData.append(key, data[key]);
-  });
-
-  const res = await api.post("/vendedores", formData);
-
+  const res = await api.post("/vendedores", data);
   return res.data;
 };
 
 // Actualizar vendedor
 export const updateVendedor = async (id, data) => {
-  const formData = new FormData();
-
-  Object.keys(data).forEach((key) => {
-    formData.append(key, data[key]);
-  });
-
-  const res = await api.put(`/vendedores/${id}`, formData);
-
+  const res = await api.put(`/vendedores/${id}`, data);
   return res.data;
 };
 // actualizar venta 

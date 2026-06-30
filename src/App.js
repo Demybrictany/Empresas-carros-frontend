@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import React, { useLayoutEffect, useState } from "react";
+import { BrowserRouter, Route, Routes, useLocation } from "react-router-dom";
 
 import VendedoresPage from "./pages/Vendedorespage";
 import DuenosCarroPage from "./pages/DuenosCarroPage";
@@ -15,6 +15,8 @@ import CrearUsuarioPage from "./pages/CrearUsuarioPage";
 import EstadisticasPage from "./pages/EstadisticasPage";
 import BuscadorPage from "./pages/BuscadorPage";
 import ComisionesPage from "./pages/ComisionesPage";
+import EmpresasPage from "./pages/EmpresasPage";
+import ConfiguracionEmpresaPage from "./pages/ConfiguracionEmpresaPage";
 
 import ProtectedRoute from "./Protected";
 import Unauthorized from "./pages/Unauthorized";
@@ -22,46 +24,77 @@ import Unauthorized from "./pages/Unauthorized";
 import "./global.css";
 import "./Login.css";
 
-import Sidebar from "./Components/paneles/Sidebar";
 import Header from "./Components/paneles/Header";
+import Sidebar from "./Components/paneles/Sidebar";
+import { applyEmpresaTheme } from "./utils/session";
 
-function App() {
+const TODOS = ["Programador", "Gerente", "Vendedor"];
+const ADMIN = ["Programador", "Gerente"];
+const LOGIN_THEME = {
+  Color_Principal: "#594646",
+  Color_Secundario: "#3D3030",
+  Color_Boton: "#8B6F5E",
+};
 
+function AppContent() {
   const [menuOpen, setMenuOpen] = useState(false);
+  const location = useLocation();
+
+  useLayoutEffect(() => {
+    const aplicarTema = () => {
+      if (location.pathname === "/login") {
+        applyEmpresaTheme(LOGIN_THEME);
+        return;
+      }
+
+      applyEmpresaTheme();
+    };
+
+    aplicarTema();
+    const actualizarTema = () => aplicarTema();
+    window.addEventListener("empresaActualizada", actualizarTema);
+    return () => window.removeEventListener("empresaActualizada", actualizarTema);
+  }, [location.pathname]);
 
   const toggleMenu = () => {
     setMenuOpen(!menuOpen);
   };
 
   return (
-    <BrowserRouter>
-
-      {/* HEADER */}
-      <Header
-        toggleMenu={toggleMenu}
-        menuOpen={menuOpen}
-      />
+    <>
+      <Header toggleMenu={toggleMenu} menuOpen={menuOpen} />
 
       <div className="layout">
-
-        {/* SIDEBAR */}
-        <Sidebar
-          menuOpen={menuOpen}
-          toggleMenu={toggleMenu}
-        />
+        <Sidebar menuOpen={menuOpen} toggleMenu={toggleMenu} />
 
         <div className="content">
-
           <Routes>
-
             <Route path="/login" element={<LoginPage />} />
             <Route path="/unauthorized" element={<Unauthorized />} />
 
             <Route
               path="/"
               element={
-                <ProtectedRoute roles={["gerente","colaborador","programador"]}>
+                <ProtectedRoute roles={TODOS}>
                   <Inicio />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/empresas"
+              element={
+                <ProtectedRoute roles={["Programador"]}>
+                  <EmpresasPage />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/configuracion-empresa"
+              element={
+                <ProtectedRoute roles={ADMIN}>
+                  <ConfiguracionEmpresaPage />
                 </ProtectedRoute>
               }
             />
@@ -69,7 +102,7 @@ function App() {
             <Route
               path="/crear-usuario"
               element={
-                <ProtectedRoute roles={["gerente","programador"]}>
+                <ProtectedRoute roles={ADMIN}>
                   <CrearUsuarioPage />
                 </ProtectedRoute>
               }
@@ -78,7 +111,7 @@ function App() {
             <Route
               path="/vendedores"
               element={
-                <ProtectedRoute roles={["gerente","programador","colaborador"]}>
+                <ProtectedRoute roles={TODOS}>
                   <VendedoresPage />
                 </ProtectedRoute>
               }
@@ -87,7 +120,7 @@ function App() {
             <Route
               path="/duenos-carro"
               element={
-                <ProtectedRoute roles={["gerente","programador","colaborador"]}>
+                <ProtectedRoute roles={TODOS}>
                   <DuenosCarroPage />
                 </ProtectedRoute>
               }
@@ -96,7 +129,7 @@ function App() {
             <Route
               path="/compradores"
               element={
-                <ProtectedRoute roles={["gerente","programador","colaborador"]}>
+                <ProtectedRoute roles={TODOS}>
                   <CompradoresPage />
                 </ProtectedRoute>
               }
@@ -105,7 +138,7 @@ function App() {
             <Route
               path="/colaboradores"
               element={
-                <ProtectedRoute roles={["gerente","programador"]}>
+                <ProtectedRoute roles={ADMIN}>
                   <ColaboradoresPage />
                 </ProtectedRoute>
               }
@@ -114,7 +147,7 @@ function App() {
             <Route
               path="/carros-predio"
               element={
-                <ProtectedRoute roles={["gerente","programador","colaborador"]}>
+                <ProtectedRoute roles={TODOS}>
                   <CarroPredioPage />
                 </ProtectedRoute>
               }
@@ -123,7 +156,7 @@ function App() {
             <Route
               path="/gastos"
               element={
-                <ProtectedRoute roles={["gerente","programador","colaborador"]}>
+                <ProtectedRoute roles={ADMIN}>
                   <GastosPage />
                 </ProtectedRoute>
               }
@@ -132,7 +165,7 @@ function App() {
             <Route
               path="/ventas"
               element={
-                <ProtectedRoute roles={["gerente","programador","colaborador"]}>
+                <ProtectedRoute roles={TODOS}>
                   <VentasPage />
                 </ProtectedRoute>
               }
@@ -141,7 +174,7 @@ function App() {
             <Route
               path="/comisiones"
               element={
-                <ProtectedRoute roles={["gerente","programador"]}>
+                <ProtectedRoute roles={ADMIN}>
                   <ComisionesPage />
                 </ProtectedRoute>
               }
@@ -150,7 +183,7 @@ function App() {
             <Route
               path="/buscar"
               element={
-                <ProtectedRoute roles={["gerente","programador","colaborador"]}>
+                <ProtectedRoute roles={TODOS}>
                   <BuscadorPage />
                 </ProtectedRoute>
               }
@@ -159,7 +192,7 @@ function App() {
             <Route
               path="/usuarios"
               element={
-                <ProtectedRoute roles={["gerente","programador"]}>
+                <ProtectedRoute roles={ADMIN}>
                   <UsuariosPage />
                 </ProtectedRoute>
               }
@@ -168,16 +201,22 @@ function App() {
             <Route
               path="/estadisticas"
               element={
-                <ProtectedRoute roles={["gerente","programador"]}>
+                <ProtectedRoute roles={ADMIN}>
                   <EstadisticasPage />
                 </ProtectedRoute>
               }
             />
-
           </Routes>
-
         </div>
       </div>
+    </>
+  );
+}
+
+function App() {
+  return (
+    <BrowserRouter>
+      <AppContent />
     </BrowserRouter>
   );
 }

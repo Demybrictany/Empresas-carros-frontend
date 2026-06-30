@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { BASE_URL } from "../../config";
+import { apiJson } from "../../utils/api";
 
 function BuscadorGlobal() {
   const [query, setQuery] = useState("");
@@ -18,9 +18,8 @@ function BuscadorGlobal() {
   }, [query]);
 
   const buscar = async (texto) => {
-    const res = await fetch(`${BASE_URL}/buscar?q=${texto}`);
-    const data = await res.json();
-    setResultados(data);
+    const data = await apiJson(`/buscar?tipo=todos&query=${encodeURIComponent(texto)}`);
+    setResultados(Array.isArray(data) ? { carros: data, compradores: [], vendedores: [], ventas: [] } : data);
   };
 
   return (

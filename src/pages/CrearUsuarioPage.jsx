@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { registrarUsuario } from "../services/usuarioApi";
+import { backendErrorMessage, error, success, warning } from "../utils/alerts";
 
 function CrearUsuarioPage() {
   const token = localStorage.getItem("token");
@@ -8,7 +9,7 @@ function CrearUsuarioPage() {
     Nombre: "",
     Correo: "",
     Contrasena: "",
-    Rol: "colaborador",
+    Rol: "Vendedor",
   });
 
   const handleChange = (e) =>
@@ -18,24 +19,23 @@ function CrearUsuarioPage() {
     e.preventDefault();
 
     if (!token) {
-      alert("No autorizado");
+      warning("No autorizado.");
       return;
     }
 
     try {
-      const data = await registrarUsuario(form, token);
+      const data = await registrarUsuario(form);
 
       if (data.error) {
-        alert(data.error);
+        error(data.error);
         return;
       }
 
-      alert("Usuario creado ✔");
+      await success("Usuario creado.");
       window.location.href = "/usuarios";
-
-    } catch (error) {
-      console.error(error);
-      alert("Error de conexión con el servidor");
+    } catch (err) {
+      console.error(err);
+      error(backendErrorMessage(err));
     }
   };
 
@@ -50,15 +50,14 @@ function CrearUsuarioPage() {
           <input
             name="Contrasena"
             type="password"
-            placeholder="Contraseña"
+            placeholder="Contrasena"
             onChange={handleChange}
             required
           />
 
           <select name="Rol" onChange={handleChange}>
-            <option value="colaborador">Colaborador</option>
-            <option value="gerente">Gerente</option>
-            <option value="cliente">Cliente</option>
+            <option value="Vendedor">Vendedor</option>
+            <option value="Gerente">Gerente</option>
           </select>
 
           <button type="submit" className="btn-primary">

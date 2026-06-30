@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { updateVenta } from "../../services/api";
+import { backendErrorMessage, error, success } from "../../utils/alerts";
 
 export default function ModalEditarVenta({ venta, compradores, cerrar, refrescar }) {
 
@@ -20,7 +21,7 @@ export default function ModalEditarVenta({ venta, compradores, cerrar, refrescar
 
       await updateVenta(venta.Id_Venta, form);
 
-      alert("Venta actualizada.");
+      success("Registro actualizado correctamente.");
 
       refrescar();
       window.dispatchEvent(new Event("ventasActualizadas"));
@@ -28,7 +29,7 @@ export default function ModalEditarVenta({ venta, compradores, cerrar, refrescar
 
     } catch (err) {
       console.error(err);
-      alert("Error al actualizar.");
+      error(backendErrorMessage(err));
     }
   };
 

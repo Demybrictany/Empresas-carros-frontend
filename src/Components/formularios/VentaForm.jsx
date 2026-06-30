@@ -1,6 +1,6 @@
 import React, { useState } from "react";
-import axios from "axios";
-import { BASE_URL } from "../../config";
+import { apiJson } from "../../utils/api";
+import { backendErrorMessage, error, success, warning } from "../../utils/alerts";
 
 export default function VentaForm({ carros, compradores, refrescarVentas, refrescarCarros }) {
 
@@ -34,18 +34,21 @@ export default function VentaForm({ carros, compradores, refrescarVentas, refres
   const registrar = async () => {
 
     if (!form.Id_Predio || !form.Id_Compra)
-      return alert("Complete todos los campos obligatorios.");
+      return warning("Complete todos los campos obligatorios.");
 
     if (form.Fecha > hoy)
-      return alert("La fecha no puede ser futura.");
+      return warning("La fecha no puede ser futura.");
 
     // no longer required: commissions come from colaboradores
 
     try {
 
-      await axios.post(`${BASE_URL}/ventas`, form);
+      await apiJson("/ventas", {
+        method: "POST",
+        body: JSON.stringify(form),
+      });
 
-      alert("Venta registrada correctamente.");
+      success("Venta registrada.");
 
       refrescarVentas();
       refrescarCarros();
@@ -59,9 +62,9 @@ export default function VentaForm({ carros, compradores, refrescarVentas, refres
 
       setCarroInfo(null);
 
-    } catch (error) {
-      console.error(error);
-      alert("Error al registrar venta");
+    } catch (err) {
+      console.error(err);
+      error(backendErrorMessage(err));
     }
   };
 

@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback } from "react";
 import { useSearchParams } from "react-router-dom";
-import { BASE_URL } from "../config";
+import { apiJson } from "../utils/api";
 import TablaDesplegable from "../Components/tablas/TablaDesplegable";
+import { confirm, error, success, warning } from "../utils/alerts";
 
 function ComisionesPage() {
   const [searchParams] = useSearchParams();
@@ -23,8 +24,6 @@ function ComisionesPage() {
   const [referencia, setReferencia] = useState("");
   const [observaciones, setObservaciones] = useState("");
 
-  const API = `${BASE_URL}`;
-
   useEffect(() => {
     const tabUrl = searchParams.get("tab");
     if (["pendientes", "pagadas", "resumen", "carros"].includes(tabUrl)) {
@@ -35,8 +34,7 @@ function ComisionesPage() {
   const cargarVentas = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch(`${API}/ventas`);
-      const data = await res.json();
+      const data = await apiJson("/ventas");
       console.log("📥 Ventas cargadas:", JSON.stringify(data, null, 2));
       setVentas(data);
     } catch (error) {
@@ -44,27 +42,25 @@ function ComisionesPage() {
     } finally {
       setLoading(false);
     }
-  }, [API]);
+  }, []);
 
   const cargarCarros = useCallback(async () => {
     try {
-      const res = await fetch(`${API}/carros-predio`);
-      const data = await res.json();
+      const data = await apiJson("/carros-predio");
       setCarros(data);
     } catch (error) {
       console.error("Error cargando carros", error);
     }
-  }, [API]);
+  }, []);
 
   const cargarColaboradores = useCallback(async () => {
     try {
-      const res = await fetch(`${API}/colaboradores`);
-      const data = await res.json();
+      const data = await apiJson("/colaboradores");
       setListaColaboradores(data);
     } catch (error) {
       console.error("Error cargando colaboradores", error);
     }
-  }, [API]);
+  }, []);
 
   useEffect(() => {
     cargarVentas();
@@ -224,43 +220,41 @@ function ComisionesPage() {
     setObservaciones("");
   };
 
-  // Procesar pago
   const procesarPago = async () => {
     if (!montoPago) {
-      alert("❌ Ingresa un monto");
+      warning("Ingresa un monto.");
       return;
     }
 
     const monto = parseFloat(montoPago);
     if (monto <= 0 || monto > modalPago.comision) {
-      alert("❌ Monto inválido");
+      warning("Monto invalido.");
       return;
     }
 
     try {
-      // TODO: Enviar al backend cuando tenga el endpoint
-      // const response = await fetch(`${API}/comisiones/pagar`, { ... });
-
-      // Por ahora guardar en localStorage
       localStorage.setItem(modalPago.keyPago, "true");
-
-      alert("✅ Comisión marcada como pagada");
+      success("Comision marcada como pagada.");
       setModalPago(null);
       cargarVentas();
-    } catch (error) {
-      console.error("Error al procesar pago", error);
-      alert("❌ Error al procesar pago");
+    } catch (err) {
+      console.error("Error al procesar pago", err);
+      error(err?.message);
     }
   };
 
-  // Desmarcar como pagada
-  const desmarcarComoPagada = (fila) => {
-    if (window.confirm(`¿Marcar comisión de ${fila.persona} como PENDIENTE?`)) {
-      localStorage.setItem(fila.keyPago, "false");
-      cargarVentas();
-    }
-  };
+  const desmarcarComoPagada = async (fila) => {
+    const confirmed = await confirm(
+      "Marcar como pendiente",
+      `Marcar comision de ${fila.persona} como pendiente.`,
+      { variant: "disable" }
+    );
+    if (!confirmed) return;
 
+    localStorage.setItem(fila.keyPago, "false");
+    success("Registro actualizado correctamente.");
+    cargarVentas();
+  };
   const toggleComisionCarroPagada = (fila) => {
     localStorage.setItem(fila.keyPago, fila.pagada ? "false" : "true");
     cargarVentas();

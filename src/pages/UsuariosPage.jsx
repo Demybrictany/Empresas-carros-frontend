@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
-import { BASE_URL } from "../config";
 import TablaDesplegable from "../Components/tablas/TablaDesplegable";
+import { apiJson } from "../utils/api";
+import { backendErrorMessage, confirm, error, success, warning } from "../utils/alerts";
 
 function UsuariosPage() {
 
@@ -10,8 +11,7 @@ const [Correo, setCorreo] = useState("");
 const [Contrasena, setContrasena] = useState("");
 const [Rol, setRol] = useState("");
 
-const API = BASE_URL + "/usuarios";
-const usuariosMostrados = usuarios.filter((u) => u.Rol !== "programador");
+const usuariosMostrados = usuarios.filter((u) => u.Rol !== "Programador");
 
 // ============================
 // CARGAR USUARIOS
@@ -21,27 +21,7 @@ const cargarUsuarios = useCallback(async () => {
 
   try {
 
-    const token = localStorage.getItem("token");
-
-    if (!token) {
-      console.error("No hay token guardado");
-      return;
-    }
-
-    const res = await fetch(API, {
-      headers: {
-        Authorization: "Bearer " + token
-      }
-    });
-
-    const data = await res.json();
-
-    console.log("Respuesta backend:", data);
-
-    if (!res.ok) {
-      console.error(data.error || "Error al cargar usuarios");
-      return;
-    }
+    const data = await apiJson("/usuarios");
 
     if (Array.isArray(data)) {
       setUsuarios(data);
@@ -58,7 +38,7 @@ const cargarUsuarios = useCallback(async () => {
     console.error("Error cargando usuarios:", error);
   }
 
-}, [API]);
+}, []);
 
 // ============================
 // USE EFFECT
@@ -90,43 +70,26 @@ const validar = () => {
 
 const crearUsuario = async () => {
 
-  const error = validar();
+  const validationError = validar();
 
-  if (error) {
-    alert(error);
+  if (validationError) {
+    warning(validationError);
     return;
   }
 
   try {
 
-    const token = localStorage.getItem("token");
-
-    const res = await fetch(API, {
-
+    await apiJson("/usuarios", {
       method: "POST",
-
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: "Bearer " + token
-      },
-
       body: JSON.stringify({
         Nombre,
         Correo,
         Contrasena,
         Rol
       })
-
     });
 
-    const data = await res.json();
-
-    if (!res.ok) {
-      alert(data.error || "Error al crear usuario");
-      return;
-    }
-
-    alert("Usuario creado correctamente");
+    success("Usuario creado.");
 
     setNombre("");
     setCorreo("");
@@ -135,9 +98,10 @@ const crearUsuario = async () => {
 
     cargarUsuarios();
 
-  } catch (error) {
+  } catch (err) {
 
-    console.error("Error creando usuario:", error);
+    console.error("Error creando usuario:", err);
+    error(backendErrorMessage(err));
 
   }
 
@@ -149,41 +113,55 @@ const crearUsuario = async () => {
 
 const eliminarUsuario = async (id) => {
 
-  const confirmar = window.confirm("¿Seguro que deseas eliminar este usuario?");
+  const confirmar = await confirm(
+    "Eliminar usuario",
+    "Esta accion eliminara el usuario seleccionado. Confirme solo si esta seguro.",
+    { variant: "delete" }
+  );
 
   if (!confirmar) return;
 
   try {
 
-    const token = localStorage.getItem("token");
-
-    const res = await fetch(API + "/" + id, {
-
+    await apiJson(`/usuarios/${id}`, {
       method: "DELETE",
-
-      headers: {
-        Authorization: "Bearer " + token
-      }
-
     });
 
-    const data = await res.json();
-
-    if (!res.ok) {
-      alert(data.error || "No se pudo eliminar el usuario");
-      return;
-    }
-
-    alert("Usuario eliminado");
+    success("Registro eliminado correctamente.");
 
     cargarUsuarios();
 
-  } catch (error) {
+  } catch (err) {
 
-    console.error("Error eliminando usuario:", error);
+    console.error("Error eliminando usuario:", err);
+    error(backendErrorMessage(err));
 
   }
 
+};
+
+const cambiarEstadoUsuario = async (id, Estado) => {
+  if (Estado !== "Activo") {
+    const confirmar = await confirm(
+      Estado === "Bloqueado" ? "Bloquear usuario" : "Inactivar usuario",
+      `El usuario no podra trabajar normalmente mientras su estado sea ${Estado}.`,
+      { variant: "disable" }
+    );
+
+    if (!confirmar) return;
+  }
+
+  try {
+    await apiJson(`/usuarios/${id}`, {
+      method: "PUT",
+      body: JSON.stringify({ Estado }),
+    });
+
+    success("Registro actualizado correctamente.");
+    cargarUsuarios();
+  } catch (err) {
+    error(backendErrorMessage(err));
+  }
 };
 
 return (
@@ -218,9 +196,8 @@ return (
       onChange={(e) => setRol(e.target.value)}
     >
       <option value="">Seleccione Rol</option>
-      <option value="gerente">Gerente</option>
-      <option value="colaborador">Colaborador</option>
-      <option value="cliente">Cliente</option>
+      <option value="Gerente">Gerente</option>
+      <option value="Vendedor">Vendedor</option>
     </select>
 
     <button
@@ -238,10 +215,10 @@ return (
 
     <thead>
       <tr>
-        <th>ID</th>
         <th>Nombre</th>
         <th>Correo</th>
         <th>Rol</th>
+        <th>Estado</th>
         <th>Acciones</th>
       </tr>
     </thead>
@@ -262,12 +239,33 @@ return (
 
             <tr key={u.Id_Usuario}>
 
-              <td>{u.Id_Usuario}</td>
               <td>{u.Nombre}</td>
               <td>{u.Correo}</td>
               <td>{u.Rol}</td>
+              <td>{u.Estado}</td>
 
               <td>
+                <button
+                  className="btn-primary"
+                  onClick={() => cambiarEstadoUsuario(u.Id_Usuario, "Activo")}
+                >
+                  Activar
+                </button>
+
+                <button
+                  className="btn-secondary"
+                  onClick={() => cambiarEstadoUsuario(u.Id_Usuario, "Inactivo")}
+                >
+                  Inactivar
+                </button>
+
+                <button
+                  className="btn-delete"
+                  onClick={() => cambiarEstadoUsuario(u.Id_Usuario, "Bloqueado")}
+                >
+                  Bloquear
+                </button>
+
                 <button
                   className="btn-eliminar-usuario"
                   onClick={() => eliminarUsuario(u.Id_Usuario)}

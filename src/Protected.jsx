@@ -1,18 +1,17 @@
 import { Navigate } from "react-router-dom";
+import { getToken, getUsuario } from "./utils/session";
 
 function ProtectedRoute({ children, roles }) {
-  const token = localStorage.getItem("token");
-  const usuario = JSON.parse(localStorage.getItem("usuario") || "null");
-  const rol = usuario?.rol?.toLowerCase();
+  const token = getToken();
+  const usuario = getUsuario();
+  const rol = usuario?.Rol;
 
-  // ❌ Si no tiene token → no puede entrar
   if (!token) {
     return <Navigate to="/login" />;
   }
 
-  // ❌ Si el rol no está permitido → acceso denegado
   if (roles && !roles.includes(rol)) {
-    return <Navigate to="/unauthorized" />;
+    return <Navigate to="/" />;
   }
 
   return children;

@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import TablaVendedores from "../Components/tablas/TablaVendedores";
-import { BASE_URL } from "../config";
+import { apiJson } from "../utils/api";
+import { backendErrorMessage, error, success, warning } from "../utils/alerts";
 
 function VendedoresPage() {
   const [vendedores, setVendedores] = useState([]);
@@ -9,7 +10,6 @@ function VendedoresPage() {
   const [Nombre, setNombre] = useState("");
   const [Telefono, setTelefono] = useState("");
   const [Dpi, setDpi] = useState("");
-  const [Foto_DPI, setFotoDPI] = useState("");
   const [Direccion, setDireccion] = useState("");
   const [RelacionDueno, setRelacion] = useState("");
   const [busqueda, setBusqueda] = useState("");
@@ -22,8 +22,7 @@ function VendedoresPage() {
   };
 
   const cargarVendedores = () => {
-    fetch(`${BASE_URL}/vendedores`)
-      .then((res) => res.json())
+    apiJson("/vendedores")
       .then((data) => setVendedores(data));
   };
 
@@ -31,21 +30,11 @@ function VendedoresPage() {
     cargarVendedores();
   }, []);
 
-  const convertirImagen = (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onloadend = () => setFotoDPI(reader.result);
-    reader.readAsDataURL(file);
-  };
-
   const limpiar = () => {
     setId(null);
     setNombre("");
     setTelefono("");
     setDpi("");
-    setFotoDPI("");
     setDireccion("");
     setRelacion("");
   };
@@ -55,7 +44,6 @@ function VendedoresPage() {
     setNombre(v.Nombre || "");
     setTelefono(v.Telefono || "");
     setDpi(v.Dpi || "");
-    setFotoDPI(v.Foto_DPI || "");
     setDireccion(v.Direccion || "");
     setRelacion(v.Relacion_Dueno || v.Relacion_Dueño || "");
   };
@@ -64,38 +52,45 @@ function VendedoresPage() {
     Nombre,
     Telefono,
     Dpi,
-    Foto_DPI,
     Direccion,
     Relacion_Dueno: RelacionDueno,
     Relacion_Dueño: RelacionDueno,
   });
 
   const agregar = async () => {
-    const error = validarFormulario();
-    if (error) return alert(error);
+    const validationError = validarFormulario();
+    if (validationError) return warning(validationError);
 
-    await fetch(`${BASE_URL}/vendedores`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(crearBody()),
-    });
+    try {
+      await apiJson("/vendedores", {
+        method: "POST",
+        body: JSON.stringify(crearBody()),
+      });
 
-    limpiar();
-    cargarVendedores();
+      success("Registro creado correctamente.");
+      limpiar();
+      cargarVendedores();
+    } catch (err) {
+      error(backendErrorMessage(err));
+    }
   };
 
   const actualizar = async () => {
-    const error = validarFormulario();
-    if (error) return alert(error);
+    const validationError = validarFormulario();
+    if (validationError) return warning(validationError);
 
-    await fetch(`${BASE_URL}/vendedores/${Id_Vendedor}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(crearBody()),
-    });
+    try {
+      await apiJson(`/vendedores/${Id_Vendedor}`, {
+        method: "PUT",
+        body: JSON.stringify(crearBody()),
+      });
 
-    limpiar();
-    cargarVendedores();
+      success("Registro actualizado correctamente.");
+      limpiar();
+      cargarVendedores();
+    } catch (err) {
+      error(backendErrorMessage(err));
+    }
   };
 
   const vendedoresFiltrados = vendedores.filter((v) => {
@@ -136,9 +131,6 @@ function VendedoresPage() {
             if (/^\d*$/.test(e.target.value)) setDpi(e.target.value);
           }}
         />
-
-        <label>Foto DPI:</label>
-        <input type="file" accept="image/*" onChange={convertirImagen} />
 
         <input placeholder="Direccion" value={Direccion} onChange={(e) => setDireccion(e.target.value)} />
 

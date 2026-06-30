@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import TablaCarros from "../Components/tablas/TablaCarros";
 import InfoSideCard from "../Components/InfoSideCard";
-import { BASE_URL } from "../config";
+import { apiJson } from "../utils/api";
+import { backendErrorMessage, error, success, warning } from "../utils/alerts";
 
 const parseOptionalId = (value) => {
   if (value === "" || value === null || value === undefined) return null;
@@ -38,29 +39,25 @@ function CarroPredioPage() {
   const [Tiempo_Traspaso, setTraspaso] = useState("");
 
   const cargarCarros = () => {
-    fetch(`${BASE_URL}/carros-predio`)
-      .then((res) => res.json())
+    apiJson("/carros-predio")
       .then((data) => setCarros(Array.isArray(data) ? data : []))
       .catch(() => setCarros([]));
   };
 
   const cargarVendedores = () => {
-    fetch(`${BASE_URL}/vendedores`)
-      .then((res) => res.json())
+    apiJson("/vendedores")
       .then((data) => setVendedores(Array.isArray(data) ? data : []))
       .catch(() => setVendedores([]));
   };
 
   const cargarCompradores = () => {
-    fetch(`${BASE_URL}/compradores`)
-      .then((res) => res.json())
+    apiJson("/compradores")
       .then((data) => setCompradores(Array.isArray(data) ? data : []))
       .catch(() => setCompradores([]));
   };
 
   const cargarDuenosCarro = () => {
-    fetch(`${BASE_URL}/dueno-carro`)
-      .then((res) => res.json())
+    apiJson("/dueno-carro")
       .then((data) => setDuenosCarro(Array.isArray(data) ? data : []))
       .catch(() => setDuenosCarro([]));
   };
@@ -71,15 +68,6 @@ function CarroPredioPage() {
     cargarCompradores();
     cargarDuenosCarro();
   }, []);
-
-  const convertirImagen = (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onloadend = () => setFoto(reader.result);
-    reader.readAsDataURL(file);
-  };
 
   const limpiar = () => {
     setId(null);
@@ -100,10 +88,10 @@ function CarroPredioPage() {
   };
 
   const guardar = async () => {
-    if (!Placa.trim()) return alert("La placa es obligatoria");
-    if (!Vin.trim()) return alert("VIN es obligatorio");
-    if (!Anio) return alert("El año es obligatorio");
-    if (!Id_Dueno_Carro) return alert("Debe seleccionar el dueño del carro");
+    if (!Placa.trim()) return warning("La placa es obligatoria.");
+    if (!Vin.trim()) return warning("VIN es obligatorio.");
+    if (!Anio) return warning("El anio es obligatorio.");
+    if (!Id_Dueno_Carro) return warning("Debe seleccionar un dueno del vehiculo.");
 
     const body = {
       Placa,
@@ -124,20 +112,20 @@ function CarroPredioPage() {
     console.log("BODY A ENVIAR:", body);
 
     const url = Id_Predio
-      ? `${BASE_URL}/carros-predio/${Id_Predio}`
-      : `${BASE_URL}/carros-predio`;
+      ? `/carros-predio/${Id_Predio}`
+      : `/carros-predio`;
 
-    const response = await fetch(url, {
+    try {
+      await apiJson(url, {
       method: Id_Predio ? "PUT" : "POST",
-      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
-    });
-
-    if (!response.ok) {
-      const data = await response.json().catch(() => ({}));
-      return alert(data.error || "No se pudo guardar el carro");
+      });
+    } catch (err) {
+      error(backendErrorMessage(err));
+      return;
     }
 
+    success(Id_Predio ? "Registro actualizado correctamente." : "Registro creado correctamente.");
     limpiar();
     cargarCarros();
   };
@@ -216,8 +204,11 @@ function CarroPredioPage() {
             onChange={(e) => setAnio(e.target.value)}
           />
 
-          <label>Foto del carro:</label>
-          <input type="file" accept="image/*" onChange={convertirImagen} />
+          <input
+            placeholder="FotoCarro (ruta o link)"
+            value={FotoCarro}
+            onChange={(e) => setFoto(e.target.value)}
+          />
 
           <input
             placeholder="Precio Compra"

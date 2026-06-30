@@ -6,14 +6,6 @@ function InfoModal({ data, onClose }) {
       <div className="modal-box">
         <h2>Información</h2>
 
-        {"Foto_DPI" in data && data.Foto_DPI && (
-          <img 
-            src={data.Foto_DPI} 
-            alt="Foto DPI"
-            style={{ width: "120px", borderRadius: "10px", marginBottom: "10px" }}
-          />
-        )}
-
         <p><strong>Nombre:</strong> {data.Nombre}</p>
 
         {data.Apellido && <p><strong>Apellido:</strong> {data.Apellido}</p>}

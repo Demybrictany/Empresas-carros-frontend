@@ -13,9 +13,7 @@ function Inicio() {
         usuario.nombre ||
         usuario.name ||
         usuario.usuario ||
-        usuario.username ||
-        usuario.Correo ||
-        usuario.correo;
+        usuario.username;
 
       return nombre || "Usuario";
     } catch {

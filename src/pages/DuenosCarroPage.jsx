@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import TablaDuenosCarro from "../Components/tablas/TablaDuenosCarro";
-import { BASE_URL } from "../config";
+import { apiJson } from "../utils/api";
+import { backendErrorMessage, error, success, warning } from "../utils/alerts";
 
 function DuenosCarroPage() {
   const [duenos, setDuenos] = useState([]);
@@ -11,37 +12,23 @@ function DuenosCarroPage() {
   const [DPI, setDPI] = useState("");
   const [Telefono, setTelefono] = useState("");
   const [Direccion, setDireccion] = useState("");
-  const [Foto_DPI, setFotoDPI] = useState("");
   const [busqueda, setBusqueda] = useState("");
 
   const validarFormulario = () => {
-    if (!Nombre.trim()) return "El nombre del dueño es obligatorio.";
-
-    if (DPI && !/^\d{13}$/.test(DPI)) {
-      return "El DPI del dueño debe tener exactamente 13 digitos.";
-    }
-
+    if (!Nombre.trim()) return "El nombre del dueno es obligatorio.";
+    if (DPI && !/^\d{13}$/.test(DPI)) return "El DPI del dueno debe tener exactamente 13 digitos.";
     return null;
   };
 
   const cargarDuenos = () => {
-    fetch(`${BASE_URL}/dueno-carro`)
-      .then((res) => res.json())
-      .then((data) => setDuenos(data));
+    apiJson("/dueno-carro")
+      .then((data) => setDuenos(Array.isArray(data) ? data : []))
+      .catch(() => setDuenos([]));
   };
 
   useEffect(() => {
     cargarDuenos();
   }, []);
-
-  const convertirImagen = (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onloadend = () => setFotoDPI(reader.result);
-    reader.readAsDataURL(file);
-  };
 
   const limpiar = () => {
     setIdDuenoCarro(null);
@@ -50,7 +37,6 @@ function DuenosCarroPage() {
     setDPI("");
     setTelefono("");
     setDireccion("");
-    setFotoDPI("");
   };
 
   const seleccionar = (d) => {
@@ -60,34 +46,33 @@ function DuenosCarroPage() {
     setDPI(d.DPI || "");
     setTelefono(d.Telefono || "");
     setDireccion(d.Direccion || "");
-    setFotoDPI(d.Foto_DPI || "");
   };
 
   const guardar = async () => {
-    const error = validarFormulario();
-    if (error) return alert(error);
+    const validationError = validarFormulario();
+    if (validationError) return warning(validationError);
 
-    const url = Id_Dueno_Carro
-      ? `${BASE_URL}/dueno-carro/${Id_Dueno_Carro}`
-      : `${BASE_URL}/dueno-carro`;
-
+    const url = Id_Dueno_Carro ? `/dueno-carro/${Id_Dueno_Carro}` : "/dueno-carro";
     const method = Id_Dueno_Carro ? "PUT" : "POST";
 
-    await fetch(url, {
-      method,
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        Nombre,
-        Apellido,
-        DPI,
-        Telefono,
-        Direccion,
-        Foto_DPI,
-      }),
-    });
+    try {
+      await apiJson(url, {
+        method,
+        body: JSON.stringify({
+          Nombre,
+          Apellido,
+          DPI,
+          Telefono,
+          Direccion,
+        }),
+      });
 
-    limpiar();
-    cargarDuenos();
+      success(Id_Dueno_Carro ? "Registro actualizado correctamente." : "Registro creado correctamente.");
+      limpiar();
+      cargarDuenos();
+    } catch (err) {
+      error(backendErrorMessage(err));
+    }
   };
 
   const duenosFiltrados = duenos.filter((d) => {
@@ -104,17 +89,16 @@ function DuenosCarroPage() {
 
   return (
     <div className="page-container">
-      <h1>Gestion de Dueños del Carro</h1>
+      <h1>Gestion de Duenos del Carro</h1>
 
       <div className="form-box">
-        <h3>{Id_Dueno_Carro ? "Editar Dueño del Carro" : "Nuevo Dueño del Carro"}</h3>
+        <h3>{Id_Dueno_Carro ? "Editar Dueno del Carro" : "Nuevo Dueno del Carro"}</h3>
 
-        <input placeholder="Nombre del dueño" value={Nombre} onChange={(e) => setNombre(e.target.value)} />
-
-        <input placeholder="Apellido del dueño" value={Apellido} onChange={(e) => setApellido(e.target.value)} />
+        <input placeholder="Nombre del dueno" value={Nombre} onChange={(e) => setNombre(e.target.value)} />
+        <input placeholder="Apellido del dueno" value={Apellido} onChange={(e) => setApellido(e.target.value)} />
 
         <input
-          placeholder="DPI dueño (13 digitos)"
+          placeholder="DPI dueno (13 digitos)"
           value={DPI}
           maxLength={13}
           onChange={(e) => {
@@ -123,25 +107,22 @@ function DuenosCarroPage() {
         />
 
         <input
-          placeholder="Telefono dueño"
+          placeholder="Telefono dueno"
           value={Telefono}
           onChange={(e) => {
             if (/^\d*$/.test(e.target.value)) setTelefono(e.target.value);
           }}
         />
 
-        <input placeholder="Direccion dueño" value={Direccion} onChange={(e) => setDireccion(e.target.value)} />
-
-        <label>Foto DPI dueño:</label>
-        <input type="file" accept="image/*" onChange={convertirImagen} />
+        <input placeholder="Direccion dueno" value={Direccion} onChange={(e) => setDireccion(e.target.value)} />
 
         {Id_Dueno_Carro ? (
           <>
-            <button className="btn-primary" onClick={guardar}>Actualizar Dueño</button>
+            <button className="btn-primary" onClick={guardar}>Actualizar Dueno</button>
             <button className="btn-secondary" onClick={limpiar}>Cancelar</button>
           </>
         ) : (
-          <button className="btn-primary" onClick={guardar}>Guardar Dueño</button>
+          <button className="btn-primary" onClick={guardar}>Guardar Dueno</button>
         )}
       </div>
 
@@ -149,7 +130,7 @@ function DuenosCarroPage() {
         <input
           className="search-input-inside"
           type="text"
-          placeholder="Buscar dueño..."
+          placeholder="Buscar dueno..."
           value={busqueda}
           onChange={(e) => setBusqueda(e.target.value)}
         />

@@ -1,19 +1,23 @@
-import { BASE_URL } from "../../config";
 import TablaDesplegable from "./TablaDesplegable";
+import { apiJson } from "../../utils/api";
+import { backendErrorMessage, confirm, error, success } from "../../utils/alerts";
 
 function TablaDuenosCarro({ duenos, seleccionar, refrescar }) {
   const eliminar = async (id) => {
-    if (!window.confirm("¿Eliminar este dueño del carro?")) return;
+    const confirmed = await confirm(
+      "Eliminar registro",
+      "Esta accion eliminara este dueno del carro.",
+      { variant: "delete" }
+    );
+    if (!confirmed) return;
 
     try {
-      await fetch(`${BASE_URL}/dueno-carro/${id}`, {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-      });
-
+      await apiJson(`/dueno-carro/${id}`, { method: "DELETE" });
+      success("Registro eliminado correctamente.");
       refrescar();
-    } catch (error) {
-      console.error("Error eliminando dueño del carro:", error);
+    } catch (err) {
+      console.error("Error eliminando dueno del carro:", err);
+      error(backendErrorMessage(err));
     }
   };
 
@@ -23,8 +27,6 @@ function TablaDuenosCarro({ duenos, seleccionar, refrescar }) {
         <table className="table-modern">
           <thead>
             <tr>
-              <th>ID</th>
-              <th>Foto DPI</th>
               <th>Nombre</th>
               <th>Apellido</th>
               <th>DPI</th>
@@ -37,39 +39,18 @@ function TablaDuenosCarro({ duenos, seleccionar, refrescar }) {
           <tbody>
             {duenos.length === 0 ? (
               <tr>
-                <td colSpan="8" style={{ textAlign: "center" }}>
-                  No hay dueños registrados
+                <td colSpan="6" style={{ textAlign: "center" }}>
+                  No hay duenos registrados
                 </td>
               </tr>
             ) : (
               duenos.slice(0, limite).map((d) => (
                 <tr key={d.Id_Dueno_Carro}>
-                  <td>{d.Id_Dueno_Carro}</td>
-
-                  <td>
-                    {d.Foto_DPI ? (
-                      <img
-                        src={d.Foto_DPI}
-                        alt="Foto DPI"
-                        style={{
-                          width: "60px",
-                          height: "60px",
-                          objectFit: "cover",
-                          borderRadius: "6px",
-                          border: "1px solid #ccc",
-                        }}
-                      />
-                    ) : (
-                      "Sin foto"
-                    )}
-                  </td>
-
                   <td>{d.Nombre}</td>
                   <td>{d.Apellido}</td>
                   <td>{d.DPI}</td>
                   <td>{d.Telefono}</td>
                   <td>{d.Direccion}</td>
-
                   <td>
                     <button className="btn-edit" onClick={() => seleccionar(d)}>
                       Editar

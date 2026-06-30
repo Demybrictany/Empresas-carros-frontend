@@ -1,5 +1,7 @@
 import { NavLink } from "react-router-dom";
 import { useEffect, useState } from "react";
+import { clearSession, getEmpresa, getUsuario } from "../../utils/session";
+import { confirm } from "../../utils/alerts";
 
 const icons = {
   home: (
@@ -124,7 +126,7 @@ const sections = [
     items: [
       { label: "Ventas", to: "/ventas", icon: "money", roles: ["gerente", "colaborador", "programador"] },
       { label: "Comisiones", to: "/comisiones", icon: "commission", roles: ["gerente", "programador"] },
-      { label: "Gastos", to: "/gastos", icon: "expense", roles: ["gerente", "colaborador", "programador"] },
+      { label: "Gastos", to: "/gastos", icon: "expense", roles: ["gerente", "programador"] },
     ],
   },
   {
@@ -133,6 +135,8 @@ const sections = [
       { label: "Colaboradores", to: "/colaboradores", icon: "people", roles: ["gerente", "programador"] },
       { label: "Usuarios", to: "/usuarios", icon: "people", roles: ["gerente", "programador"] },
       { label: "Crear Usuario", to: "/crear-usuario", icon: "addUser", roles: ["gerente", "programador"] },
+      { label: "Empresas", to: "/empresas", icon: "dashboard", roles: ["programador"] },
+      { label: "Config.\nEmpresa", to: "/configuracion-empresa", icon: "dashboard", roles: ["gerente", "programador"] },
     ],
   },
   {
@@ -146,18 +150,21 @@ const sections = [
 
 function Sidebar({ menuOpen, toggleMenu }) {
   const [usuario, setUsuario] = useState(null);
+  const [empresa, setEmpresa] = useState(getEmpresa());
 
   useEffect(() => {
     const cargarUsuario = () => {
-      const data = localStorage.getItem("usuario");
-      setUsuario(data ? JSON.parse(data) : null);
+      setUsuario(getUsuario());
+      setEmpresa(getEmpresa());
     };
 
     cargarUsuario();
     window.addEventListener("usuarioActualizado", cargarUsuario);
+    window.addEventListener("empresaActualizada", cargarUsuario);
 
     return () => {
       window.removeEventListener("usuarioActualizado", cargarUsuario);
+      window.removeEventListener("empresaActualizada", cargarUsuario);
     };
   }, []);
 
@@ -167,12 +174,28 @@ function Sidebar({ menuOpen, toggleMenu }) {
     }
   };
 
-  const canSee = (item) => usuario && item.roles.includes(usuario.rol);
+  const canSee = (item) => {
+    const rol = (usuario?.Rol || "").toLowerCase();
+    const roles = item.roles.filter((r) => r !== "colaborador");
+    if (rol === "vendedor") {
+      return item.roles.includes("colaborador") || roles.includes("vendedor");
+    }
+    return usuario && roles.includes(rol);
+  };
 
-  const logout = () => {
-    localStorage.clear();
+  const logout = async () => {
+    const confirmed = await confirm(
+      "Cerrar sesion",
+      "Confirme que desea salir del sistema.",
+      { variant: "disable" }
+    );
+    if (!confirmed) return;
+
+    clearSession();
     window.location.href = "/login";
   };
+
+  const nombreEmpresa = empresa.Nombre_Comercial || empresa.Nombre_Empresa || "Multiempresa";
 
   return (
     <div className={`sidebar ${menuOpen ? "open" : ""}`}>
@@ -180,6 +203,16 @@ function Sidebar({ menuOpen, toggleMenu }) {
         <span></span>
         <span></span>
       </button>
+
+      {usuario && (
+        <div className="sidebar-brand">
+          {empresa.Logo_Empresa && (
+            <img src={empresa.Logo_Empresa} alt={nombreEmpresa} className="sidebar-brand-logo" />
+          )}
+          <strong>{nombreEmpresa}</strong>
+          <small>{usuario.Nombre} · {usuario.Rol}</small>
+        </div>
+      )}
 
       <ul className="sidebar-menu">
         {!usuario && (

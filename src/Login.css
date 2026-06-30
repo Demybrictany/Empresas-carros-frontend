@@ -2,7 +2,7 @@
   width: 350px;
   margin: 100px auto;
   padding: 25px;
-  background: #0d1b2a;
+  background: rgba(61, 48, 48, 0.92);
   border-radius: 10px;
   color: white;
   text-align: center;
@@ -19,7 +19,7 @@
 .login-container button {
   width: 100%;
   padding: 10px;
-  background: #1e90ff;
+  background: var(--color-boton);
   color: white;
   border: none;
   border-radius: 6px;

@@ -1,30 +1,18 @@
 import { useState } from "react";
-import { BASE_URL } from "../config";
+import { apiJson } from "../utils/api";
+import { warning } from "../utils/alerts";
 
 function BuscadorPage() {
   const [query, setQuery] = useState("");
   const [tipo, setTipo] = useState("todos");
   const [resultados, setResultados] = useState([]);
 
-  const API = `${BASE_URL}`;
-
   const buscar = async () => {
-    if (!query.trim()) return alert("Escriba algo para buscar");
+    if (!query.trim()) return warning("Escriba algo para buscar.");
 
     try {
 
-      const res = await fetch(
-        `${API}/buscar?tipo=${tipo}&query=${encodeURIComponent(query)}`
-      );
-
-      if (!res.ok) {
-        console.error("Error del servidor");
-        setResultados([]);
-        return;
-      }
-
-      const data = await res.json();
-
+      const data = await apiJson(`/buscar?tipo=${tipo}&query=${encodeURIComponent(query)}`);
       setResultados(Array.isArray(data) ? data : []);
 
     } catch (error) {
@@ -88,13 +76,6 @@ function BuscadorPage() {
                   <p><strong>Teléfono:</strong> {r.Telefono}</p>
                   <p><strong>Precio Venta:</strong> Q{r.PrecioVenta}</p>
 
-                  {r.Foto_DPI && (
-                    <img
-                      src={r.Foto_DPI}
-                      alt="Foto DPI"
-                      style={{ width: "120px", borderRadius: "6px", marginTop: "5px" }}
-                    />
-                  )}
                 </>
               )}
 
@@ -114,7 +95,6 @@ function BuscadorPage() {
               {r.Id_Venta && (
                 <>
                   <h4>💵 Venta</h4>
-                  <p><strong>ID Venta:</strong> {r.Id_Venta}</p>
                   <p><strong>Fecha:</strong> {r.Fecha}</p>
                   <p><strong>Precio:</strong> Q{r.PrecioVenta}</p>
                   <p><strong>Comisión:</strong> Q{r.Comision}</p>
