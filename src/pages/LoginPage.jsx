@@ -13,6 +13,24 @@ function LoginPage() {
 
   const API = `${BASE_URL}/usuarios/login`;
 
+  const mensajeLogin = (mensajeBackend = "") => {
+    const mensaje = mensajeBackend.toLowerCase();
+
+    if (mensaje.includes("inactivo") || mensaje.includes("suspend")) {
+      return "El usuario fue suspendido.";
+    }
+
+    if (mensaje.includes("bloqueado")) {
+      return "El usuario fue bloqueado.";
+    }
+
+    if (mensaje.includes("elimin") || mensaje.includes("no encontrado")) {
+      return "El usuario fue eliminado.";
+    }
+
+    return "Usuario o contrasena invalido.";
+  };
+
   const iniciarSesion = async () => {
     if (cargando) return;
 
@@ -39,7 +57,7 @@ function LoginPage() {
       const data = await res.json();
 
       if (!res.ok) {
-        error("Usuario o contrasena invalido.");
+        error(mensajeLogin(data?.error || data?.mensaje));
         return;
       }
 

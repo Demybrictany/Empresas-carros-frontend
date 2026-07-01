@@ -228,14 +228,45 @@ function EmpresasPage({ vista = "crear" }) {
     }
   };
 
+  const eliminarEmpresa = async (empresa) => {
+    if (estadoEmpresaId) return;
+
+    const confirmar = await confirm(
+      "Eliminar empresa",
+      `La empresa "${empresa.Nombre_Comercial || empresa.Nombre_Empresa}" se borrara definitivamente junto con sus datos relacionados si el servidor lo permite.`,
+      { variant: "delete" }
+    );
+
+    if (!confirmar) return;
+
+    try {
+      setEstadoEmpresaId(empresa.Id_Empresa);
+      await apiJson(`/empresa/${empresa.Id_Empresa}`, { method: "DELETE" });
+
+      if (Number(empresa.Id_Empresa) === Number(usuarioActual?.Id_Empresa)) {
+        warning("La empresa de su sesion fue eliminada. Debe iniciar sesion nuevamente.");
+        localStorage.clear();
+        window.location.href = "/login";
+        return;
+      }
+
+      success("Empresa eliminada correctamente.");
+      await cargarEmpresas();
+    } catch (err) {
+      error(backendErrorMessage(err));
+    } finally {
+      setEstadoEmpresaId(null);
+    }
+  };
+
   const cambiarEstado = async (empresa, Estado) => {
     if (estadoEmpresaId) return;
 
     if (Estado !== "Activa") {
       const confirmar = await confirm(
-        Estado === "Eliminada" ? "Eliminar empresa" : "Suspender empresa",
+        "Suspender empresa",
         `La empresa "${empresa.Nombre_Comercial || empresa.Nombre_Empresa}" cambiara su estado a ${Estado}.`,
-        { variant: Estado === "Eliminada" ? "delete" : "disable" }
+        { variant: "disable" }
       );
 
       if (!confirmar) return;
@@ -467,7 +498,7 @@ function EmpresasPage({ vista = "crear" }) {
                       {estadoEmpresaId === empresa.Id_Empresa ? "Guardando..." : "Activar"}
                     </button>
                     <button className="btn-secondary" onClick={() => cambiarEstado(empresa, "Suspendida")} disabled={estadoEmpresaId === empresa.Id_Empresa}>Suspender</button>
-                    <button className="btn-delete" onClick={() => cambiarEstado(empresa, "Eliminada")} disabled={estadoEmpresaId === empresa.Id_Empresa}>Eliminar</button>
+                    <button className="btn-delete" onClick={() => eliminarEmpresa(empresa)} disabled={estadoEmpresaId === empresa.Id_Empresa}>Eliminar</button>
                   </td>
                 </tr>
               ))}
