@@ -16,19 +16,17 @@ function LoginPage() {
   const mensajeLogin = (mensajeBackend = "") => {
     const mensaje = mensajeBackend.toLowerCase();
 
-    if (mensaje.includes("inactivo") || mensaje.includes("suspend")) {
-      return "El usuario fue suspendido.";
+    if (
+      mensaje.includes("inactivo") ||
+      mensaje.includes("suspend") ||
+      mensaje.includes("bloqueado") ||
+      mensaje.includes("elimin") ||
+      mensaje.includes("no encontrado")
+    ) {
+      return "El usuario fue suspendido o eliminado comuniquese con el encargado si es un error";
     }
 
-    if (mensaje.includes("bloqueado")) {
-      return "El usuario fue bloqueado.";
-    }
-
-    if (mensaje.includes("elimin") || mensaje.includes("no encontrado")) {
-      return "El usuario fue eliminado.";
-    }
-
-    return "Usuario o contrasena invalido.";
+    return "El usuario o contrasena es incorrecto";
   };
 
   const iniciarSesion = async () => {
