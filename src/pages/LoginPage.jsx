@@ -20,13 +20,12 @@ function LoginPage() {
       mensaje.includes("inactivo") ||
       mensaje.includes("suspend") ||
       mensaje.includes("bloqueado") ||
-      mensaje.includes("elimin") ||
-      mensaje.includes("no encontrado")
+      mensaje.includes("elimin")
     ) {
       return "El usuario fue suspendido o eliminado comuniquese con el encargado si es un error";
     }
 
-    return "El usuario o contrasena es incorrecto";
+    return "El usuario o contraseña es incorrecto";
   };
 
   const iniciarSesion = async () => {
